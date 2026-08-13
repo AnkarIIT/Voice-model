@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Voice RAG - MSMARCO-XI</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Voice RAG</h1>
+      <p class="subtitle">ElevenLabs STT &middot; Local IVF vectors &middot; Groq Llama-3.1-8B &middot; MSMARCO-XI (Hindi + English)</p>
+    </div>
+    <div id="health" class="health">loading...</div>
+  </header>
+
+  <main>
+    <section id="metrics" class="metrics">
+      <h2>Latency analytics</h2>
+      <div id="metricGrid" class="metric-grid">
+        <div class="metric"><span class="label">Core P50</span><span id="coreP50" class="value">-</span><span class="unit">ms</span></div>
+        <div class="metric"><span class="label">Core P70</span><span id="coreP70" class="value">-</span><span class="unit">ms</span></div>
+        <div class="metric"><span class="label">Core P100</span><span id="coreP100" class="value">-</span><span class="unit">ms</span></div>
+        <div class="metric"><span class="label">E2E P50</span><span id="e2eP50" class="value">-</span><span class="unit">ms</span></div>
+        <div class="metric"><span class="label">E2E P70</span><span id="e2eP70" class="value">-</span><span class="unit">ms</span></div>
+        <div class="metric"><span class="label">E2E P100</span><span id="e2eP100" class="value">-</span><span class="unit">ms</span></div>
+      </div>
+      <p class="metrics-note" id="metricsNote">Benchmark summary will appear here after the benchmark suite runs.</p>
+    </section>
+
+    <section class="chat-wrap">
+      <div id="chat" class="chat"></div>
+      <div id="recording" class="recording hidden">Recording... speak now</div>
+      <form id="askForm" class="input-row">
+        <input id="queryInput" type="text" placeholder="Ask in Hindi or English..." autocomplete="off" />
+        <button type="button" id="micBtn" title="Speak">MIC</button>
+        <button type="submit" id="sendBtn">ASK</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
