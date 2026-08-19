@@ -134,6 +134,8 @@ class RAGHarness:
         started = time.perf_counter()
         transcript: Optional[str] = None
         stt_result: Optional[SttResult] = None
+        stt_succeeded = False
+
 
         if audio is not None:
             try:
