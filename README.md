@@ -139,5 +139,4 @@ tests/            37 tests
 - [x] Grounding + guardrails + circuit breakers + retries
 - [x] Latency analytics (core vs STT) + benchmark report `data/metrics/latency_benchmark.json`
 - [x] Tests (37) and live demo UI
-- [ ] Form link + `#RAGInGoa` demo video
 ```
