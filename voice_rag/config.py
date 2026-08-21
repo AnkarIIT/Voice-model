@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     benchmark_n_queries: int = 120
     benchmark_seed: int = 7
 
-    mock_mode: bool = False
+    mock_mode: bool = True
 
     @property
     def index_dir(self) -> Path:
