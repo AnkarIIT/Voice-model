@@ -66,6 +66,30 @@ def run_pipeline(
             "provider": "guardrail",
         }
 
+    if g["action"] == "allow" and g.get("reason") == "greeting":
+        import random
+        ans = random.choice([
+            "Namaste! I'm RAGinGOA. Ask me anything in Hindi, English, or Bengali.",
+            "Hello! I'm RAGinGOA. How can I help you today?",
+            "Hi there! Ready to answer your questions from the knowledge base.",
+        ])
+        total = (time.perf_counter() - t0) * 1000
+        timings["llm_ms"] = 0
+        timings["total_ms"] = round(total, 2)
+        timings["retrieval_llm_ms"] = round(ret["total_ms"], 2)
+        return {
+            "status": "ok",
+            "query": query_text,
+            "stt": stt,
+            "retrieved": chunks,
+            "retrieval": ret,
+            "answer": ans,
+            "guardrail": {"action": "allow", "reason": "greeting"},
+            "hallucination": {"grounded": True, "hit_rate": 1.0, "method": "greeting_bypass"},
+            "timings": timings,
+            "provider": "greeting",
+        }
+
     ans, llm_ms, prov = generate_answer(query_text, chunks)
     timings["llm_ms"] = round(llm_ms, 2)
     h = hallucination_check(ans, chunks)

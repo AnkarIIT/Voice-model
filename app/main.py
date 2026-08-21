@@ -38,6 +38,14 @@ app.add_middleware(
 
 _INDEX = None
 _INDEX_LOCK = threading.Lock()
+_BADDIE_COUNT = 0
+_BADDIE_LOCK = threading.Lock()
+
+
+def _inc_baddie():
+    global _BADDIE_COUNT
+    with _BADDIE_LOCK:
+        _BADDIE_COUNT += 1
 
 
 def get_index() -> FaissIndex:
@@ -64,6 +72,18 @@ def warmup():
 
 def _clamp_k(k: int) -> int:
     return max(1, min(int(k), MAX_K))
+
+
+def health_payload():
+    loaded = _INDEX is not None
+    return {
+        "status": "ok",
+        "provider": STT_PROVIDER,
+        "index_loaded": loaded,
+        "index_available": (INDEX_DIR / "faiss.index").exists(),
+        "ntotal": _INDEX.index.ntotal if loaded else 0,
+        "baddie_detectors": _BADDIE_COUNT,
+    }
 
 
 async def _save_upload(file: UploadFile) -> Path:
@@ -121,14 +141,12 @@ def speak(text: str = Form(...)):
 
 @app.get("/health")
 def health():
-    loaded = _INDEX is not None
-    return {
-        "status": "ok",
-        "provider": STT_PROVIDER,
-        "index_loaded": loaded,
-        "index_available": (INDEX_DIR / "faiss.index").exists(),
-        "ntotal": _INDEX.index.ntotal if loaded else 0,
-    }
+    return health_payload()
+
+
+@app.get("/baddies")
+def baddies():
+    return {"baddie_detectors": _BADDIE_COUNT}
 
 
 @app.post("/transcribe")
@@ -153,6 +171,21 @@ async def transcribe(
             tmp_path.unlink()
 
 
+def _run_and_track(query_text, audio_path, language_code, index, k, use_rerank, stt_provider):
+    out = run_pipeline(
+        query_text=query_text,
+        audio_path=audio_path,
+        language_code=language_code,
+        index=index,
+        k=k,
+        use_rerank=use_rerank,
+        stt_provider=stt_provider,
+    )
+    if out.get("guardrail", {}).get("action") == "block":
+        _inc_baddie()
+    return out
+
+
 @app.post("/query")
 def query_text(
     query: str = Form(...),
@@ -162,12 +195,7 @@ def query_text(
     idx = get_index()
     if idx is None:
         raise HTTPException(503, "Index not built. Run build_index.py first.")
-    out = run_pipeline(
-        query_text=query,
-        index=idx,
-        k=_clamp_k(k),
-        use_rerank=bool(rerank),
-    )
+    out = _run_and_track(query_text=query, audio_path=None, language_code="hi-IN", index=idx, k=_clamp_k(k), use_rerank=bool(rerank), stt_provider=STT_PROVIDER)
     return JSONResponse(out)
 
 
@@ -190,6 +218,8 @@ async def voice_query(
             k=_clamp_k(k),
             stt_provider=stt_provider,
         )
+        if out.get("guardrail", {}).get("action") == "block":
+            _inc_baddie()
         return JSONResponse(out)
     finally:
         with suppress(OSError):

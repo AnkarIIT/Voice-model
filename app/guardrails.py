@@ -16,6 +16,17 @@ UNSAFE_RE = re.compile(
     re.IGNORECASE,
 )
 
+GREETING_RE = re.compile(
+    r"^(?:hi|hello|hey|namaste|namaskar|good\s*(?:morning|afternoon|evening)|howdy|greetings|hola|hiya|yo|नमस्ते|नमस्कार|प्रणाम|सुप्रभात|शुभकामनाएं)[\s!,.]*$",
+    re.IGNORECASE,
+)
+
+GREETING_ANSWERS = [
+    "Namaste! I'm RAGinGOA. Ask me anything in Hindi, English, or Bengali.",
+    "Hello! I'm RAGinGOA. How can I help you today?",
+    "Hi there! I'm RAGinGOA — ready to answer your questions from the knowledge base.",
+]
+
 
 def screen_text(text: str) -> dict:
     t = (text or "").strip()
@@ -29,12 +40,15 @@ def screen_text(text: str) -> dict:
 def check_guardrails(query: str, retrieved: list, threshold: float = None) -> dict:
     if threshold is None:
         threshold = ABSTAIN_THRESHOLD
-    if len((query or "").strip()) < 3:
+    q = (query or "").strip()
+    if len(q) < 3 and not GREETING_RE.search(q):
         return {"action": "reject", "reason": "too_short", "answer": "Query too short."}
-    screened = screen_text(query)
+    screened = screen_text(q)
     if screened["action"] == "block":
         logger.info("blocked unsafe query")
         return {**screened, "answer": "Blocked: unsafe content."}
+    if GREETING_RE.search(q):
+        return {"action": "allow", "reason": "greeting", "answer": None}
     if not retrieved:
         return {"action": "abstain", "reason": "no_context", "answer": ABSTAIN_ANSWER}
     max_score = max(r.get("score", 0.0) for r in retrieved)

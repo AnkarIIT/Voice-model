@@ -50,7 +50,9 @@ def test_pipeline_abstains_on_low_similarity():
     assert out["timings"]["llm_ms"] == 0
 
 
-def test_pipeline_rejects_short_query():
+def test_pipeline_greeting_bypass():
     idx = FakeIndex(_chunks())
     out = run_pipeline(query_text="hi", index=idx, k=2)
-    assert out["status"] == "reject"
+    assert out["status"] == "ok"
+    assert out["guardrail"]["reason"] == "greeting"
+    assert "RAGinGOA" in out["answer"]
