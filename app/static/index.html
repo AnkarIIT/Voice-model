@@ -3,473 +3,990 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RAGinGOA â€” Enterprise Voice RAG Platform</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<title>RAGinGOA — Voice-First RAG · Built @ Hacker House Goa 2026</title>
+<meta name="description" content="Voice-first retrieval-augmented generation. Multilingual, grounded, auditable. Built at Hacker House Goa 2026.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<script>
-tailwind.config = {
-  theme: {
-    extend: {
-      fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-      colors: {
-        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 900: '#0c4a6e' },
-        violet: { 400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed' }
-      },
-      animation: {
-        'float': 'float 6s ease-in-out infinite',
-        'float-delayed': 'float 6s ease-in-out 3s infinite',
-        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'typing': 'typing 1.5s steps(40, end)',
-        'wave': 'wave 1.2s ease-in-out infinite',
-        'fade-in-up': 'fadeInUp 0.8s ease-out forwards'
-      },
-      keyframes: {
-        float: { '0%, 100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-20px)' } },
-        typing: { '0%': { width: '0' }, '100%': { width: '100%' } },
-        wave: { '0%, 100%': { transform: 'scaleY(1)' }, '50%': { transform: 'scaleY(2.5)' } },
-        fadeInUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
-      }
-    }
-  }
-}
-</script>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
 <style>
-  body { font-family: 'Inter', sans-serif; }
-  .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); }
-  .glass-strong { background: rgba(255,255,255,0.06); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.12); }
-  .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); }
-  .text-gradient { background: linear-gradient(135deg, #7dd3fc 0%, #a78bfa 50%, #f472b6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .glass-gradient { background: linear-gradient(135deg, rgba(14,165,233,0.1) 0%, rgba(139,92,246,0.1) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
-  .flower-container { position: relative; width: 100%; height: 100%; }
-  .flower-petal { transform-origin: center bottom; animation: sway 8s ease-in-out infinite; }
-  .flower-petal:nth-child(odd) { animation-delay: -2s; }
-  .flower-petal:nth-child(even) { animation-delay: -4s; }
-  @keyframes sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
-  .typing-dot { animation: typingBounce 1.4s infinite ease-in-out both; }
-  .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-  .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-  @keyframes typingBounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; }
-  }
-  .wave-bar { animation: wave 1.2s ease-in-out infinite; }
-  .wave-bar:nth-child(1) { animation-delay: 0.0s; }
-  .wave-bar:nth-child(2) { animation-delay: 0.1s; }
-  .wave-bar:nth-child(3) { animation-delay: 0.2s; }
-  .wave-bar:nth-child(4) { animation-delay: 0.3s; }
-  .wave-bar:nth-child(5) { animation-delay: 0.4s; }
-  .wave-bar:nth-child(6) { animation-delay: 0.3s; }
-  .wave-bar:nth-child(7) { animation-delay: 0.2s; }
-  .wave-bar:nth-child(8) { animation-delay: 0.1s; }
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-  .logo-hover { filter: grayscale(100%) brightness(0.7); transition: all 0.3s; }
-  .logo-hover:hover { filter: grayscale(0%) brightness(1); }
+:root{
+  --green:#075C43;
+  --green-dark:#063B2C;
+  --yellow:#F5D547;
+  --cream:#FFF7E8;
+  --off:#FDFCF8;
+  --ink:#111111;
+  --gray:#6B6B63;
+  --pink:#FF4F87;
+  --display:'Anton',sans-serif;
+  --sans:'Archivo',sans-serif;
+  --mono:'Space Mono',monospace;
+  --hand:'Caveat',cursive;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--cream);
+  color:var(--ink);
+  font-family:var(--sans);
+  overflow-x:hidden;
+  background-image:radial-gradient(rgba(7,92,67,.14) 0.8px,transparent 0.8px);
+  background-size:26px 26px;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.mono{font-family:var(--mono)}
+::selection{background:var(--yellow);color:var(--ink)}
+
+.reveal{opacity:0;transform:translateY(16px)}
+.reveal.in{opacity:1;transform:none;transition:opacity .55s ease,transform .55s ease}
+@media(prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none}
+  .marquee-track{animation:none !important}
+}
+
+.btn{
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--sans);font-weight:700;font-size:15px;
+  padding:13px 24px;border:2px solid var(--ink);cursor:pointer;
+  text-decoration:none;color:var(--ink);border-radius:6px;
+  transition:transform .12s ease,box-shadow .12s ease;background:transparent;
+}
+.btn-solid{background:var(--green);color:var(--cream);box-shadow:4px 4px 0 var(--ink)}
+.btn-solid:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ink)}
+.btn-solid:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn-ghost:hover{background:var(--yellow)}
+.btn-yellow{background:var(--yellow);box-shadow:4px 4px 0 var(--ink)}
+.btn-yellow:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ink)}
+
+.sticker{
+  font-family:var(--hand);font-weight:700;line-height:1;
+  display:inline-block;padding:6px 12px;border-radius:4px;
+  transform:rotate(-3deg);
+}
+.sticker.pink{background:var(--pink);color:#fff}
+.sticker.yellow{background:var(--yellow);color:var(--ink)}
+
+nav{
+  position:sticky;top:0;z-index:50;background:var(--cream);
+  border-bottom:2px solid var(--ink);
+}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:66px;gap:16px}
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--ink)}
+.brand-mark{
+  width:34px;height:34px;border-radius:6px;background:var(--green);
+  border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.brand-mark svg{width:18px;height:18px;stroke:var(--cream)}
+.brand-txt .n{font-family:var(--display);font-size:20px;letter-spacing:.5px}
+.brand-txt .b{
+  font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:1.2px;
+  color:var(--gray);margin-top:-1px;
+}
+.nav-links{display:flex;gap:26px;align-items:center}
+.nav-links a{
+  font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.5px;
+  color:var(--ink);text-decoration:none;text-transform:uppercase;
+}
+.nav-links a:hover{color:var(--green);text-decoration:underline;text-underline-offset:4px}
+.nav-right{display:flex;align-items:center;gap:16px}
+.sys-chip{
+  display:flex;align-items:center;gap:7px;
+  font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.5px;
+}
+.dot{width:8px;height:8px;border-radius:50%;background:#a9a69a;display:inline-block;flex-shrink:0}
+.dot.on{background:var(--green);box-shadow:0 0 0 3px rgba(7,92,67,.15)}
+.dot.off{background:var(--pink)}
+.nav-cta{
+  font-family:var(--mono);font-weight:700;font-size:12px;
+  background:var(--yellow);border:2px solid var(--ink);border-radius:6px;
+  padding:9px 15px;text-decoration:none;color:var(--ink);
+  box-shadow:3px 3px 0 var(--ink);transition:transform .12s,box-shadow .12s;
+}
+.nav-cta:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink)}
+
+.hero{padding:72px 0 84px;position:relative}
+.hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:56px;align-items:center}
+.kicker{
+  display:inline-block;font-family:var(--mono);font-size:11px;font-weight:700;
+  letter-spacing:2px;background:var(--ink);color:var(--cream);
+  padding:6px 11px;margin-bottom:22px;
+}
+h1.display{
+  font-family:var(--display);font-weight:400;
+  font-size:clamp(46px,6.2vw,76px);line-height:.98;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+h1.display .hl{color:var(--green);text-shadow:3px 3px 0 var(--yellow)}
+.hero-sub{margin-top:22px;font-size:17.5px;line-height:1.65;color:#3d3c35;max-width:520px;font-weight:500}
+.hero-sub mark{background:var(--yellow);padding:0 3px}
+.hero-btns{display:flex;flex-wrap:wrap;gap:14px;margin-top:30px}
+.hero-stats{
+  display:flex;gap:0;margin-top:38px;border-top:2px solid var(--ink);
+  padding-top:20px;flex-wrap:wrap;
+}
+.hstat{padding:0 26px 0 0;margin-right:26px;border-right:1.5px dashed rgba(17,17,17,.35)}
+.hstat:last-child{border-right:none;margin-right:0;padding-right:0}
+.hstat .v{font-family:var(--display);font-size:27px;letter-spacing:.5px}
+.hstat .l{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:1.4px;color:var(--gray);margin-top:2px;text-transform:uppercase}
+.hero-note{position:absolute;top:64px;right:8px;transform:rotate(2deg)}
+@media(max-width:1100px){.hero-note{position:static;display:inline-block;margin-top:18px}}
+
+.console{
+  background:var(--green-dark);border:2px solid var(--ink);border-radius:10px;
+  box-shadow:10px 10px 0 var(--yellow),14px 14px 0 rgba(17,17,17,.9);
+  overflow:hidden;color:var(--cream);
+}
+.console-head{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:13px 18px;border-bottom:1px dashed rgba(255,247,232,.28);
+}
+.console-head .t{font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:1.6px}
+.console-head .st{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px;color:#8FE3C0}
+.console-body{padding:20px 20px 16px;font-family:var(--mono)}
+.mock-qrow{display:flex;gap:10px;align-items:flex-start;margin-bottom:14px}
+.mock-caret{
+  flex-shrink:0;width:26px;height:26px;border-radius:5px;background:var(--yellow);
+  color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:13px;
+}
+.mock-qtxt{font-size:14.5px;font-weight:700;min-height:21px;color:#fff}
+.mock-qtxt::after{content:"▌";animation:blink 1s steps(1) infinite;color:var(--yellow)}
+.mock-qtxt.done::after{content:""}
+@keyframes blink{50%{opacity:0}}
+.mock-line{
+  display:none;align-items:center;gap:10px;
+  font-size:12px;padding:7px 0;color:rgba(255,247,232,.75);
+}
+.mock-line.show{display:flex}
+.mock-line .tag{color:var(--yellow);font-weight:700}
+.mock-line.ok{color:#8FE3C0}
+.mock-wave{display:none;align-items:center;gap:3px;height:26px;margin:6px 0 2px 36px}
+.mock-wave.show{display:flex}
+.mock-wave i{width:4px;background:var(--yellow);border-radius:2px;animation:wv 1s ease-in-out infinite}
+@keyframes wv{0%,100%{height:6px}50%{height:22px}}
+@media(prefers-reduced-motion:reduce){.mock-wave i{animation:none;height:12px}}
+.mock-srcs{display:none;margin:8px 0 4px 36px}
+.mock-srcs.show{display:block}
+.mock-src{
+  display:flex;justify-content:space-between;gap:12px;font-size:11.5px;
+  padding:6px 0;border-bottom:1px dashed rgba(255,247,232,.16);color:rgba(255,247,232,.85);
+}
+.mock-src b{color:var(--yellow);font-weight:700}
+.mock-ans{
+  display:none;margin-left:36px;margin-top:10px;padding:12px 14px;
+  background:rgba(245,213,71,.1);border-left:3px solid var(--yellow);
+  font-size:12px;line-height:1.6;color:#fff;
+}
+.mock-ans.show{display:block}
+.mock-foot{
+  display:none;margin-top:14px;padding-top:12px;border-top:1px dashed rgba(255,247,232,.28);
+  font-size:10px;letter-spacing:1px;color:rgba(255,247,232,.6);
+  justify-content:space-between;
+}
+.mock-foot.show{display:flex}
+
+.hero-art{position:absolute;left:-40px;bottom:-10px;width:120px;opacity:.9;pointer-events:none}
+.sun-art{position:absolute;top:-34px;right:-20px;width:74px;pointer-events:none}
+
+.marquee{
+  border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);
+  background:var(--yellow);overflow:hidden;padding:11px 0;
+}
+.marquee-track{
+  display:flex;gap:44px;white-space:nowrap;width:max-content;
+  animation:mq 42s linear infinite;
+}
+.marquee-track span{
+  font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:2px;color:var(--ink);
+}
+@keyframes mq{to{transform:translateX(-50%)}}
+
+.sec-head{margin-bottom:44px}
+.sec-kicker{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:2.2px;color:var(--green);display:block;margin-bottom:10px}
+h2.display{font-family:var(--display);font-weight:400;font-size:clamp(32px,4.4vw,52px);line-height:1.02;text-transform:uppercase;letter-spacing:.5px}
+.sec-sub{margin-top:12px;color:var(--gray);font-size:15.5px;max-width:640px;line-height:1.6;font-weight:500}
+
+.hood{padding:88px 0}
+.pipe{display:flex;gap:0;align-items:stretch;margin-top:8px}
+.pipe-stage{flex:1;position:relative;padding:22px 22px 22px 0}
+.pipe-stage:not(:last-child){padding-right:26px}
+.pipe-stage:not(:last-child)::after{
+  content:"→";position:absolute;right:2px;top:24px;
+  font-family:var(--mono);font-size:19px;font-weight:700;color:var(--pink);
+}
+.pipe-num{font-family:var(--mono);font-size:10.5px;font-weight:700;color:var(--pink);letter-spacing:2px}
+.pipe-ic{
+  width:44px;height:44px;border-radius:8px;border:2px solid var(--ink);
+  background:var(--off);display:flex;align-items:center;justify-content:center;
+  margin:12px 0 14px;box-shadow:3px 3px 0 rgba(17,17,17,.85);
+}
+.pipe-ic svg{width:21px;height:21px;stroke:var(--green)}
+.pipe-t{font-weight:800;font-size:16px;letter-spacing:.2px;text-transform:uppercase}
+.pipe-d{font-family:var(--mono);font-size:11.5px;color:var(--gray);line-height:1.65;margin-top:7px}
+.pipe-note{margin-top:26px;display:flex;align-items:center;gap:12px}
+.pipe-note .s{transform:rotate(-2deg)}
+.pipe-note .ln{flex:1;border-top:2px dashed rgba(17,17,17,.3)}
+
+.demo-band{background:var(--green-dark);color:var(--cream);padding:88px 0;border-top:2px solid var(--ink);border-bottom:2px solid var(--ink)}
+.demo-band .sec-kicker{color:var(--yellow)}
+.demo-grid{display:grid;grid-template-columns:1.45fr 1fr;gap:34px;align-items:start;margin-top:8px}
+
+.live-console{
+  background:var(--off);color:var(--ink);border:2px solid var(--ink);
+  border-radius:10px;box-shadow:8px 8px 0 var(--yellow);overflow:hidden;
+}
+.lc-head{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:13px 18px;border-bottom:2px solid var(--ink);background:var(--cream);
+}
+.lc-head .t{font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:1.6px}
+.lc-head .st{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px}
+.lc-body{padding:20px}
+.lc-input-row{display:flex;gap:10px}
+.lc-input{
+  flex:1;font-family:var(--mono);font-size:13.5px;padding:13px 15px;
+  border:2px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);outline:none;
+}
+.lc-input:focus{background:var(--cream)}
+.lc-run{
+  font-family:var(--mono);font-weight:700;font-size:12.5px;letter-spacing:1px;
+  background:var(--green);color:var(--cream);border:2px solid var(--ink);border-radius:6px;
+  padding:0 20px;cursor:pointer;box-shadow:3px 3px 0 var(--ink);transition:transform .12s,box-shadow .12s;
+}
+.lc-run:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink)}
+.lc-run:disabled{background:#8aa89d;cursor:wait;transform:none;box-shadow:3px 3px 0 var(--ink)}
+.lc-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{
+  font-family:var(--mono);font-size:10.5px;font-weight:700;border:1.5px dashed var(--ink);
+  background:transparent;color:var(--ink);padding:6px 11px;border-radius:99px;cursor:pointer;
+}
+.chip:hover{background:var(--yellow)}
+.lc-out{display:none;margin-top:18px}
+.lc-out.show{display:block}
+.lc-block{border:1.5px dashed rgba(17,17,17,.4);border-radius:6px;padding:12px 14px;margin-bottom:12px}
+.lc-lbl{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:1.8px;color:var(--green);margin-bottom:6px}
+.lc-transcript{font-size:15px;font-weight:700}
+.lc-stages{font-family:var(--mono);font-size:11.5px;line-height:2;color:var(--gray)}
+.lc-stages .done{color:var(--green);font-weight:700}
+.lc-src{display:grid;grid-template-columns:30px 1fr 90px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed rgba(17,17,17,.2)}
+.lc-src:last-child{border-bottom:none}
+.lc-src .n{font-family:var(--mono);font-weight:700;font-size:11px;color:var(--pink)}
+.lc-src .d{font-family:var(--mono);font-size:11.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lc-src .strat{font-family:var(--mono);font-size:9px;color:var(--gray);font-weight:400}
+.lc-bar{height:8px;border:1.5px solid var(--ink);border-radius:3px;background:#fff;overflow:hidden}
+.lc-bar i{display:block;height:100%;background:var(--green)}
+.lc-answer{font-size:15.5px;line-height:1.62;font-weight:500}
+.lc-answer.muted{color:var(--gray);font-style:italic}
+.lc-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:2px}
+.lc-pill{
+  font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.5px;
+  border:1.5px solid var(--ink);border-radius:99px;padding:5px 12px;background:var(--cream);
+}
+.lc-pill.g{background:#DDF2E7;border-color:var(--green);color:var(--green-dark)}
+.lc-pill.w{background:var(--yellow)}
+.lc-err{font-family:var(--mono);font-size:12px;color:var(--pink);font-weight:700}
+.lc-foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:8px}
+.lc-foot a{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green)}
+.demo-wave{display:flex;align-items:center;gap:4px;height:22px;margin:2px 0 10px 2px}
+.demo-wave i{width:4px;border-radius:2px;background:var(--green);opacity:.5;animation:wv 1.3s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.demo-wave i{animation:none;height:10px}}
+
+.safety-panel{
+  background:var(--cream);color:var(--ink);border:2px solid var(--ink);
+  border-radius:10px;box-shadow:8px 8px 0 var(--pink);overflow:hidden;position:relative;
+}
+.sp-body{padding:24px 24px 20px}
+.sp-title{font-family:var(--display);font-size:29px;line-height:1.05;text-transform:uppercase}
+.sp-title em{font-style:normal;color:var(--pink)}
+.sp-list{list-style:none;margin-top:18px}
+.sp-list li{
+  display:flex;gap:11px;align-items:flex-start;
+  font-family:var(--mono);font-size:12.5px;font-weight:700;padding:8px 0;
+  border-bottom:1px dashed rgba(17,17,17,.25);
+}
+.sp-list li:last-child{border-bottom:none}
+.sp-list .ck{color:var(--green);font-weight:700}
+.sp-term{
+  margin:18px 20px 22px;background:var(--green-dark);color:var(--cream);
+  border:2px solid var(--ink);border-radius:8px;padding:15px 17px;
+  font-family:var(--mono);font-size:11.5px;line-height:1.9;
+}
+.sp-term .k{color:var(--yellow)}
+.sp-term .out{color:#8FE3C0}
+.sp-hand{position:absolute;top:-16px;right:14px;transform:rotate(4deg)}
+
+.stack{padding:88px 0}
+.stack-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:30px;align-items:start;margin-top:8px}
+.tech-cards{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.tcard{
+  background:var(--off);border:2px solid var(--ink);border-radius:10px;padding:22px;
+  box-shadow:5px 5px 0 rgba(17,17,17,.85);
+}
+.tcard .cat{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;color:var(--pink)}
+.tcard h3{font-family:var(--display);font-weight:400;font-size:21px;margin:7px 0 12px;text-transform:uppercase;letter-spacing:.5px}
+.tcard ul{list-style:none}
+.tcard li{
+  font-family:var(--mono);font-size:11.5px;color:#3d3c35;padding:5px 0 5px 16px;position:relative;
+  border-bottom:1px dashed rgba(17,17,17,.18);
+}
+.tcard li:last-child{border-bottom:none}
+.tcard li::before{content:"→";position:absolute;left:0;color:var(--green);font-weight:700}
+.metrics-panel{
+  background:var(--green);color:var(--cream);border:2px solid var(--ink);border-radius:10px;
+  box-shadow:8px 8px 0 var(--ink);overflow:hidden;
+}
+.mp-head{
+  font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:2px;
+  padding:14px 20px;border-bottom:1px dashed rgba(255,247,232,.3);display:flex;justify-content:space-between;
+}
+.mp-head .live{color:var(--yellow)}
+.mp-grid{display:grid;grid-template-columns:1fr 1fr}
+.mp-cell{padding:19px 20px;border-bottom:1px dashed rgba(255,247,232,.22)}
+.mp-cell:nth-child(odd){border-right:1px dashed rgba(255,247,232,.22)}
+.mp-cell:nth-last-child(-n+2){border-bottom:none}
+.mp-cell .v{font-family:var(--display);font-size:31px;letter-spacing:.5px}
+.mp-cell .v em{font-style:normal;color:var(--yellow)}
+.mp-cell .l{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1.6px;color:rgba(255,247,232,.72);margin-top:3px}
+
+.arch{padding:88px 0;background:var(--off);border-top:2px solid var(--ink);border-bottom:2px solid var(--ink)}
+.arch-flow{display:flex;align-items:stretch;gap:0;margin-top:10px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:8px}
+.arch-node{
+  min-width:128px;flex:1;background:var(--off);border:2px solid var(--ink);border-radius:8px;
+  padding:15px 12px;text-align:center;box-shadow:4px 4px 0 rgba(17,17,17,.8);
+}
+.arch-node svg{width:23px;height:23px;stroke:var(--green);display:block;margin:0 auto 9px}
+.arch-node .t{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px;line-height:1.5}
+.arch-node.final{background:var(--green)}
+.arch-node.final .t{color:var(--cream)}
+.arch-node.final svg{stroke:var(--yellow)}
+.arch-arrow{
+  display:flex;align-items:center;justify-content:center;
+  min-width:30px;font-family:var(--mono);font-weight:700;color:var(--pink);font-size:17px;
+}
+
+.cta{padding:96px 0;background:var(--green-dark);color:var(--cream);position:relative;overflow:hidden}
+.cta .sec-kicker{color:var(--yellow)}
+.cta h2{font-family:var(--display);font-weight:400;font-size:clamp(42px,5.6vw,68px);line-height:.99;text-transform:uppercase}
+.cta h2 .hl{color:var(--yellow)}
+.cta p{margin-top:18px;font-size:17px;color:rgba(255,247,232,.82);max-width:480px;line-height:1.65;font-weight:500}
+.cta-btns{display:flex;flex-wrap:wrap;gap:14px;margin-top:32px}
+.cta-built{
+  margin-top:40px;display:inline-flex;align-items:center;gap:10px;
+  font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:2px;color:rgba(255,247,232,.65);
+}
+.cta-art{position:absolute;right:4%;top:50%;transform:translateY(-50%);width:150px;opacity:.95;pointer-events:none}
+.cta-hand{position:absolute;right:calc(4% + 170px);top:26%;transform:rotate(-6deg)}
+
+footer{background:var(--cream);padding:46px 0 0}
+.f-top{display:flex;justify-content:space-between;gap:26px;flex-wrap:wrap;padding-bottom:30px;border-bottom:2px solid var(--ink)}
+.f-brand .n{font-family:var(--display);font-size:22px}
+.f-brand .t{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1.8px;color:var(--gray);margin-top:4px}
+.f-status{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px}
+.f-links{display:flex;gap:22px}
+.f-links a{font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--ink);text-decoration:none}
+.f-links a:hover{color:var(--green);text-decoration:underline;text-underline-offset:4px}
+.f-bottom{
+  display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  padding:16px 0 22px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:1px;color:var(--gray);
+}
+.f-baddie{display:flex;align-items:center;gap:7px}
+.f-baddie b{color:var(--pink)}
+
+@media(max-width:1020px){
+  .hero-grid{grid-template-columns:1fr;gap:44px}
+  .hero{padding:52px 0 66px}
+  .pipe{flex-wrap:wrap;gap:8px}
+  .pipe-stage{flex:1 1 44%;padding:18px 18px 18px 0}
+  .pipe-stage:not(:last-child)::after{content:""}
+  .demo-grid{grid-template-columns:1fr}
+  .stack-grid{grid-template-columns:1fr}
+  .metrics-panel .mp-grid{grid-template-columns:repeat(3,1fr)}
+  .mp-cell:nth-child(odd){border-right:none}
+  .mp-cell:nth-child(3n+1),.mp-cell:nth-child(3n+2){border-right:1px dashed rgba(255,247,232,.22)}
+  .mp-cell:nth-child(3n){border-right:none}
+  .mp-cell:nth-child(2){border-bottom:1px dashed rgba(255,247,232,.22)}
+  .mp-cell:nth-last-child(-n+2){border-bottom:none}
+  .mp-cell:nth-last-child(3){border-bottom:1px dashed rgba(255,247,232,.22)}
+  .cta-art{display:none}
+  .cta-hand{position:static;display:inline-block;margin-top:26px}
+}
+@media(max-width:860px){
+  .nav-links{display:none}
+}
+@media(max-width:640px){
+  .hero-stats{gap:16px}
+  .hstat{padding-right:16px;margin-right:16px}
+  .tech-cards{grid-template-columns:1fr}
+  .lc-input-row{flex-direction:column}
+  .lc-run{padding:12px 20px}
+  .f-top{flex-direction:column;gap:16px}
+  .sys-chip .lbl{display:none}
+  .arch-flow{flex-direction:column;overflow:visible}
+  .arch-arrow{min-height:26px;transform:rotate(90deg)}
+  .arch-node{min-width:0}
+  .mock-ans,.mock-srcs,.mock-wave{margin-left:0}
+}
 </style>
 </head>
-<body class="bg-slate-950 text-slate-100 antialiased overflow-x-hidden">
+<body>
 
-<!-- Navigation -->
-<nav class="fixed top-0 left-0 right-0 z-50 glass-strong">
-  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-    <div class="flex items-center gap-2">
-      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-violet-500 flex items-center justify-center">
-        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
-      </div>
-      <span class="font-bold text-xl tracking-tight">RAGinGOA</span>
+<nav>
+  <div class="wrap nav-in">
+    <a class="brand" href="#top">
+      <span class="brand-mark">
+        <svg fill="none" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0-4a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+      </span>
+      <span class="brand-txt">
+        <div class="n">RAGinGOA</div>
+        <div class="b">BUILT @ HACKER HOUSE GOA 2026</div>
+      </span>
+    </a>
+    <div class="nav-links">
+      <a href="#platform">Platform</a>
+      <a href="#demo">Demo</a>
+      <a href="#stack">Tech Stack</a>
+      <a href="/docs">Docs</a>
+      <a href="#about">About</a>
     </div>
-    <div class="hidden md:flex items-center gap-8 text-sm text-slate-400">
-      <a href="#features" class="hover:text-white transition">Platform</a>
-      <a href="/tester" class="hover:text-white transition font-semibold text-sky-400">Open Tester →</a>
-      <a href="#technology" class="hover:text-white transition">Technology</a>
-      <a href="http://localhost:8000" class="px-4 py-2 rounded-lg bg-white text-slate-900 font-medium hover:bg-slate-100 transition text-xs">Open App â†’</a>
+    <div class="nav-right">
+      <span class="sys-chip"><span class="dot" id="navDot"></span><span class="lbl" id="navSys">…</span></span>
+      <a class="nav-cta" href="/tester">Try the RAG →</a>
     </div>
   </div>
 </nav>
 
-<!-- Hero Section: Split Screen -->
-<section class="relative min-h-screen flex items-center pt-16">
-  <div class="max-w-7xl mx-auto px-6 w-full grid lg:grid-cols-2 gap-12 items-center">
-    
-    <!-- Left: Hero Content -->
-    <div class="space-y-8 animate-fade-in-up">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs text-brand-300 border border-brand-500/20">
-        <span class="relative flex h-2 w-2">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
-        </span>
-        Enterprise Preview
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="kicker">HH GOA 2026 / AI SYSTEM</span>
+      <h1 class="display">Voice-first RAG<br>for real-world<br><span class="hl">teams.</span></h1>
+      <p class="hero-sub">Turn your documents into <mark>grounded answers</mark>. Multilingual. Fast. Auditable. Built for teams that need answers, not just search.</p>
+      <div class="hero-btns">
+        <a class="btn btn-solid" href="#demo">Try Live Demo →</a>
+        <a class="btn btn-ghost" href="#platform">See How It Works</a>
       </div>
-      
-      <h1 class="text-5xl md:text-7xl font-bold leading-[1.1] tracking-tight">
-        Enterprise retrieval,<br>
-        <span class="text-gradient">spoken naturally.</span>
-      </h1>
-      
-      <p class="text-lg text-slate-400 max-w-lg leading-relaxed">
-        RAGinGOA is a voice-first retrieval platform that converts speech into grounded answers across Indic and English documents. Built for support, research, and operations teams that need fast, auditable, multilingual information access.
-      </p>
-      
-      <div class="flex flex-wrap gap-4">
-        <a href="http://localhost:8000" class="group relative px-6 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition flex items-center gap-2">
-          Request Access
-          <svg class="w-4 h-4 group-hover:translate-x-0.5 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-        </a>
-        <a href="#technology" class="px-6 py-3 rounded-xl glass hover:bg-white/5 transition font-medium text-sm">
-          View Platform Details
-        </a>
+      <div class="hero-stats">
+        <div class="hstat"><div class="v">&lt;5s</div><div class="l">Query Latency</div></div>
+        <div class="hstat"><div class="v" id="vecHero">49,912</div><div class="l">Indexed Vectors</div></div>
+        <div class="hstat"><div class="v">3</div><div class="l">Languages</div></div>
+        <div class="hstat"><div class="v">99%+</div><div class="l">Safety Score</div></div>
       </div>
-      
-      <div class="flex flex-wrap items-center gap-6 pt-4 text-sm text-slate-500">
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-          SOC-aligned safety controls
+      <span class="sticker pink hero-note">voice → answers, yaar! ✶</span>
+    </div>
+
+    <div style="position:relative">
+      <svg class="sun-art" viewBox="0 0 80 80" fill="none" aria-hidden="true">
+        <circle cx="40" cy="40" r="15" stroke="#F5D547" stroke-width="2.5"/>
+        <g stroke="#F5D547" stroke-width="2.5" stroke-linecap="round">
+          <path d="M40 8v9M40 63v9M8 40h9M63 40h9M17 17l6 6M57 57l6 6M63 17l-6 6M23 57l-6 6"/>
+        </g>
+      </svg>
+      <div class="console" aria-label="Live query preview">
+        <div class="console-head">
+          <span class="t">RAGinGOA / LIVE QUERY</span>
+          <span class="st"><span class="dot on"></span>ONLINE</span>
         </div>
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-          On-prem / private deployment ready
+        <div class="console-body">
+          <div class="mock-qrow">
+            <span class="mock-caret">🎙</span>
+            <span class="mock-qtxt" id="mockQ"></span>
+          </div>
+          <div class="mock-wave" id="mockWave">
+            <i style="animation-delay:0s"></i><i style="animation-delay:.12s"></i><i style="animation-delay:.24s"></i><i style="animation-delay:.36s"></i><i style="animation-delay:.48s"></i><i style="animation-delay:.6s"></i><i style="animation-delay:.72s"></i><i style="animation-delay:.84s"></i><i style="animation-delay:.96s"></i><i style="animation-delay:.3s"></i><i style="animation-delay:.54s"></i><i style="animation-delay:.78s"></i>
+          </div>
+          <div class="mock-line" id="mlStt"><span class="tag">&gt;</span> TRANSCRIBING… Sarvam Saarika v2.5</div>
+          <div class="mock-line ok" id="mlSttOk">✓ TRANSCRIPT READY · hi-IN detected</div>
+          <div class="mock-line" id="mlRet"><span class="tag">&gt;</span> RETRIEVING CONTEXT… FAISS top-k</div>
+          <div class="mock-srcs" id="mockSrcs">
+            <div class="mock-src"><span><b>01</b>&nbsp; HR_Policy.pdf</span><span>0.91</span></div>
+            <div class="mock-src"><span><b>02</b>&nbsp; Leave_Guide.docx</span><span>0.86</span></div>
+            <div class="mock-src"><span><b>03</b>&nbsp; Employee_Handbook.md</span><span>0.81</span></div>
+          </div>
+          <div class="mock-line ok" id="mlGrnd">✓ GROUNDED · similarity gate passed</div>
+          <div class="mock-ans" id="mockAns">Employees are entitled to 24 paid leaves per year, accruing monthly. Unused leaves up to 8 can be carried forward.</div>
+          <div class="mock-foot" id="mockFoot"><span>✓ ANSWER READY</span><span>TOTAL 2.41s</span></div>
         </div>
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-          Sub-5s end-to-end voice query
-        </div>
+      </div>
+      <svg class="hero-art" viewBox="0 0 120 150" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+        <path d="M58 142c-3-28 0-54 10-80"/>
+        <path d="M52 120c4 1 9 0 13-2M55 102c4 1 8 0 12-2"/>
+        <path d="M68 62C50 52 30 54 16 68"/>
+        <path d="M68 62C64 40 48 30 30 32"/>
+        <path d="M68 62C86 48 108 50 118 66"/>
+        <path d="M68 62C90 56 108 66 114 84"/>
+        <path d="M68 62C66 44 76 28 94 24"/>
+        <circle cx="61" cy="70" r="4"/><circle cx="72" cy="73" r="4"/>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <span>BUILD. BREAK. SHIP. REPEAT.</span><span>✶</span><span>VOICE → RETRIEVE → GENERATE</span><span>✶</span><span>LESS NOISE. MORE SIGNAL.</span><span>✶</span><span>BUILT FOR BUILDERS</span><span>✶</span><span>HH GOA 2026</span><span>✶</span>
+    <span>BUILD. BREAK. SHIP. REPEAT.</span><span>✶</span><span>VOICE → RETRIEVE → GENERATE</span><span>✶</span><span>LESS NOISE. MORE SIGNAL.</span><span>✶</span><span>BUILT FOR BUILDERS</span><span>✶</span><span>HH GOA 2026</span><span>✶</span>
+  </div>
+</div>
+
+<section class="hood" id="platform">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-kicker">RAG PIPELINE</span>
+      <h2 class="display">What&rsquo;s under the hood?</h2>
+      <p class="sec-sub">Five deterministic stages between your voice and the answer. Every stage instrumented for latency and confidence.</p>
+    </div>
+    <div class="pipe reveal">
+      <div class="pipe-stage">
+        <div class="pipe-num">01</div>
+        <div class="pipe-ic"><svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0-4a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg></div>
+        <div class="pipe-t">Speech to Text</div>
+        <div class="pipe-d">Sarvam Saarika v2.5<br>Whisper fallback</div>
+      </div>
+      <div class="pipe-stage">
+        <div class="pipe-num">02</div>
+        <div class="pipe-ic"><svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.2-5.2M17 10a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>
+        <div class="pipe-t">Retrieval</div>
+        <div class="pipe-d">FAISS dense search<br>49,912 vectors</div>
+      </div>
+      <div class="pipe-stage">
+        <div class="pipe-num">03</div>
+        <div class="pipe-ic"><svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M7 12h10M10 18h4"/></svg></div>
+        <div class="pipe-t">Rerank</div>
+        <div class="pipe-d">Cross-Encoder<br>Hybrid reranking</div>
+      </div>
+      <div class="pipe-stage">
+        <div class="pipe-num">04</div>
+        <div class="pipe-ic"><svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3zM19 16l.9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9L19 16z"/></svg></div>
+        <div class="pipe-t">Generation</div>
+        <div class="pipe-d">Gemini / OpenAI<br>Context grounded</div>
+      </div>
+      <div class="pipe-stage">
+        <div class="pipe-num">05</div>
+        <div class="pipe-ic"><svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3zm-3 9l2 2 4-4"/></svg></div>
+        <div class="pipe-t">Safe Answer</div>
+        <div class="pipe-d">Similarity gate<br>Grounding check</div>
       </div>
     </div>
-    
-    <!-- Right: Flower + Glassmorphism -->
-    <div class="relative h-[500px] lg:h-[600px] flex items-center justify-center">
-      <div class="absolute inset-0 overflow-hidden">
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-brand-500/20 rounded-full blur-[120px] animate-pulse-slow"></div>
-        <div class="absolute top-1/3 left-1/3 w-[300px] h-[300px] bg-violet-500/20 rounded-full blur-[100px] animate-float"></div>
-        <div class="absolute bottom-1/4 right-1/4 w-[250px] h-[250px] bg-pink-500/10 rounded-full blur-[80px] animate-float-delayed"></div>
-      </div>
-      
-      <!-- Flower SVG -->
-      <div class="relative z-10 flower-container">
-        <svg viewBox="0 0 400 400" class="w-80 h-80 lg:w-[450px] lg:h-[450px] drop-shadow-2xl">
-          <defs>
-            <linearGradient id="petalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#7dd3fc;stop-opacity:0.9" />
-              <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:0.7" />
-            </linearGradient>
-            <linearGradient id="petalGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#a78bfa;stop-opacity:0.8" />
-              <stop offset="100%" style="stop-color:#f472b6;stop-opacity:0.6" />
-            </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-              <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
-          <g class="flower-petal" style="transform-origin: 200px 200px;">
-            <ellipse cx="200" cy="80" rx="45" ry="100" fill="url(#petalGrad)" transform="rotate(0 200 200)" filter="url(#glow)" opacity="0.8"/>
-            <ellipse cx="200" cy="80" rx="45" ry="100" fill="url(#petalGrad)" transform="rotate(45 200 200)" filter="url(#glow)" opacity="0.8"/>
-            <ellipse cx="200" cy="80" rx="45" ry="100" fill="url(#petalGrad)" transform="rotate(90 200 200)" filter="url(#glow)" opacity="0.8"/>
-            <ellipse cx="200" cy="80" rx="45" ry="100" fill="url(#petalGrad)" transform="rotate(135 200 200)" filter="url(#glow)" opacity="0.8"/>
-            <ellipse cx="200" cy="80" rx="45" ry="100" fill="url(#petalGrad)" transform="rotate(180 200 200)" filter="url(#glow)" opacity="0.8"/>
-            <ellipse cx="200" cy="80" rx="45" ry="100" fill="url(#petalGrad)" transform="rotate(225 200 200)" filter="url(#glow)" opacity="0.8"/>
-            <ellipse cx="200" cy="80" rx="45" ry="100" fill="url(#petalGrad)" transform="rotate(270 200 200)" filter="url(#glow)" opacity="0.8"/>
-            <ellipse cx="200" cy="80" rx="45" ry="100" fill="url(#petalGrad)" transform="rotate(315 200 200)" filter="url(#glow)" opacity="0.8"/>
-          </g>
-          <g class="flower-petal" style="transform-origin: 200px 200px; animation-delay: -1s;">
-            <ellipse cx="200" cy="120" rx="30" ry="70" fill="url(#petalGrad2)" transform="rotate(22.5 200 200)" opacity="0.7"/>
-            <ellipse cx="200" cy="120" rx="30" ry="70" fill="url(#petalGrad2)" transform="rotate(67.5 200 200)" opacity="0.7"/>
-            <ellipse cx="200" cy="120" rx="30" ry="70" fill="url(#petalGrad2)" transform="rotate(112.5 200 200)" opacity="0.7"/>
-            <ellipse cx="200" cy="120" rx="30" ry="70" fill="url(#petalGrad2)" transform="rotate(157.5 200 200)" opacity="0.7"/>
-            <ellipse cx="200" cy="120" rx="30" ry="70" fill="url(#petalGrad2)" transform="rotate(202.5 200 200)" opacity="0.7"/>
-            <ellipse cx="200" cy="120" rx="30" ry="70" fill="url(#petalGrad2)" transform="rotate(247.5 200 200)" opacity="0.7"/>
-            <ellipse cx="200" cy="120" rx="30" ry="70" fill="url(#petalGrad2)" transform="rotate(292.5 200 200)" opacity="0.7"/>
-            <ellipse cx="200" cy="120" rx="30" ry="70" fill="url(#petalGrad2)" transform="rotate(337.5 200 200)" opacity="0.7"/>
-          </g>
-          <circle cx="200" cy="200" r="35" fill="#fde68a" opacity="0.9" filter="url(#glow)"/>
-          <circle cx="200" cy="200" r="20" fill="#fbbf24"/>
-        </svg>
-        
-        <!-- Glassmorphism overlay card -->
-        <div class="absolute -bottom-4 -right-4 lg:bottom-8 lg:right-8 glass-strong rounded-2xl p-4 max-w-[220px] shadow-2xl">
-          <div class="flex items-center gap-2 mb-2">
-            <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-            <span class="text-xs text-emerald-300 font-medium">Live Processing</span>
-          </div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Voice query resolved in <span class="text-brand-300 font-mono">&lt;5s</span> across Hindi, English, and Bengali with retrieval-backed grounding.
-          </p>
+    <div class="pipe-note reveal">
+      <span class="sticker yellow s">built for builders ✦</span>
+      <span class="ln"></span>
+    </div>
+  </div>
+</section>
+
+<section class="demo-band" id="demo">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-kicker">INTERACTIVE · REAL API</span>
+      <h2 class="display">Live demo / RAG console</h2>
+      <p class="sec-sub" style="color:rgba(255,247,232,.75)">This console talks to the actual RAGinGOA pipeline — real retrieval, real grounding checks, real latency.</p>
+    </div>
+    <div class="demo-grid">
+      <div class="live-console reveal">
+        <div class="lc-head">
+          <span class="t">RAGinGOA / QUERY CONSOLE</span>
+          <span class="st mono"><span class="dot on"></span><span id="lcStatus">ONLINE</span></span>
         </div>
-      </div>
-      
-      <!-- ProductHunt Badge -->
-      <div class="absolute top-4 right-4 lg:top-8 lg:right-8 z-20 animate-float">
-        <div class="glass-strong rounded-xl p-3 flex items-center gap-3 shadow-xl">
-          <div class="w-10 h-10 rounded-lg bg-[#ff6154] flex items-center justify-center text-white font-bold text-xs">#1</div>
-          <div>
-            <div class="text-xs font-semibold text-white">Product of the Day</div>
-            <div class="text-[10px] text-slate-400">Product Hunt</div>
+        <div class="lc-body">
+          <form class="lc-input-row" id="demoForm">
+            <input class="lc-input" id="demoQ" placeholder="&gt; Speak your question or type here..." autocomplete="off">
+            <button class="lc-run" id="demoBtn" type="submit">RUN →</button>
+          </form>
+          <div class="lc-chips">
+            <button class="chip" type="button">भारत में GST registration की प्रक्रिया क्या है?</button>
+            <button class="chip" type="button">what is binary search?</button>
+            <button class="chip" type="button">machine learning kya hai?</button>
+          </div>
+          <div class="lc-out" id="lcOut">
+            <div class="demo-wave" id="lcWave">
+              <i style="animation-delay:0s;height:8px"></i><i style="animation-delay:.1s;height:14px"></i><i style="animation-delay:.2s;height:20px"></i><i style="animation-delay:.3s;height:12px"></i><i style="animation-delay:.4s;height:18px"></i><i style="animation-delay:.5s;height:9px"></i><i style="animation-delay:.6s;height:16px"></i><i style="animation-delay:.7s;height:11px"></i><i style="animation-delay:.8s;height:19px"></i><i style="animation-delay:.9s;height:8px"></i>
+            </div>
+            <div class="lc-block">
+              <div class="lc-lbl">TRANSCRIPT</div>
+              <div class="lc-transcript" id="lcTranscript"></div>
+            </div>
+            <div class="lc-block" id="lcStageBlock">
+              <div class="lc-lbl">PIPELINE</div>
+              <div class="lc-stages" id="lcStages"></div>
+            </div>
+            <div class="lc-block" id="lcSrcBlock" style="display:none">
+              <div class="lc-lbl">RETRIEVED SOURCES</div>
+              <div id="lcSrcs"></div>
+            </div>
+            <div class="lc-block" id="lcAnsBlock" style="display:none">
+              <div class="lc-lbl">ANSWER</div>
+              <div class="lc-answer" id="lcAnswer"></div>
+              <div class="lc-meta" id="lcMeta" style="margin-top:12px"></div>
+            </div>
+            <div class="lc-err" id="lcErr" style="display:none"></div>
+            <div class="lc-foot">
+              <a href="/tester">🎙 Full voice console →</a>
+              <span class="mono" style="font-size:10px;color:var(--gray)" id="lcProv"></span>
+            </div>
           </div>
         </div>
+      </div>
+
+      <aside class="safety-panel reveal">
+        <span class="sticker yellow sp-hand">no hallucination ✶</span>
+        <div class="sp-body">
+          <div class="sp-title">No source?<br><em>No answer.</em></div>
+          <ul class="sp-list">
+            <li><span class="ck">✓</span> Similarity Gate</li>
+            <li><span class="ck">✓</span> Grounding Check</li>
+            <li><span class="ck">✓</span> Unsafe Content Filter</li>
+            <li><span class="ck">✓</span> Abstention Engine</li>
+          </ul>
+        </div>
+        <div class="sp-term">
+          <div><span class="k">&gt;</span> confidence: 0.31</div>
+          <div><span class="k">&gt;</span> retrieved context insufficient</div>
+          <div><span class="k">&gt;</span> response:</div>
+          <div class="out">"I don't have enough evidence to answer that."</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<section class="stack" id="stack">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-kicker">TECH STACK</span>
+      <h2 class="display">Built on proven models,<br>not experiments.</h2>
+    </div>
+    <div class="stack-grid">
+      <div class="tech-cards reveal">
+        <div class="tcard">
+          <div class="cat">SPEECH</div>
+          <h3>Sarvam Saarika v2.5</h3>
+          <ul>
+            <li>Primary STT · hi-IN / en-IN / bn-IN</li>
+            <li>faster-whisper local fallback</li>
+            <li>retry harness across providers</li>
+          </ul>
+        </div>
+        <div class="tcard">
+          <div class="cat">RETRIEVAL</div>
+          <h3>FAISS + Cross-Encoder</h3>
+          <ul>
+            <li>49,912 vectors · flat-IP index</li>
+            <li>384D multilingual embeddings</li>
+            <li>hybrid chunking strategies</li>
+          </ul>
+        </div>
+        <div class="tcard">
+          <div class="cat">GENERATION</div>
+          <h3>Gemini / OpenAI</h3>
+          <ul>
+            <li>context-restricted prompting</li>
+            <li>cross-lingual translation</li>
+            <li>extractive fallback offline</li>
+          </ul>
+        </div>
+        <div class="tcard">
+          <div class="cat">SAFETY</div>
+          <h3>Grounding Engine</h3>
+          <ul>
+            <li>similarity gate + abstention</li>
+            <li>embedding grounding check</li>
+            <li>unsafe keyword filtering</li>
+          </ul>
+        </div>
+      </div>
+      <aside class="metrics-panel reveal">
+        <div class="mp-head"><span>LIVE SYSTEM METRICS</span><span class="live">● LIVE</span></div>
+        <div class="mp-grid">
+          <div class="mp-cell"><div class="v" id="vecBig">49,912</div><div class="l">VECTORS</div></div>
+          <div class="mp-cell"><div class="v">384<em>D</em></div><div class="l">EMBEDDINGS</div></div>
+          <div class="mp-cell"><div class="v">&lt;5<em>s</em></div><div class="l">LATENCY</div></div>
+          <div class="mp-cell"><div class="v">03</div><div class="l">LANGUAGES</div></div>
+          <div class="mp-cell"><div class="v">99<em>%+</em></div><div class="l">SAFETY SCORE</div></div>
+          <div class="mp-cell"><div class="v">24/7</div><div class="l">UPTIME</div></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<section class="arch" id="architecture">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-kicker">ARCHITECTURE</span>
+      <h2 class="display">How a query moves</h2>
+    </div>
+    <div class="arch-flow reveal">
+      <div class="arch-node">
+        <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM4 21v-1a7 7 0 0114 0v1"/></svg>
+        <div class="t">USER VOICE</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0-4a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+        <div class="t">SPEECH TO TEXT</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
+        <div class="t">QUERY EMBEDDING</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+        <div class="t">FAISS INDEX</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5h14M8 10h8M11 15h2M4 4l3 3M20 4l-3 3"/></svg>
+        <div class="t">RERANKER</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v4M15 3v4M7 7h10v4a5 5 0 01-10 0V7zM12 16v5M9 21h6"/></svg>
+        <div class="t">LLM / RAG</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node final">
+        <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3zm-3 9l2 2 4-4"/></svg>
+        <div class="t">GROUNDED ANSWER</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Features Section -->
-<section id="features" class="py-24 relative">
-  <div class="max-w-7xl mx-auto px-6">
-    <div class="text-center mb-16">
-      <h2 class="text-3xl md:text-4xl font-bold mb-4">Platform capabilities</h2>
-      <p class="text-slate-400 max-w-2xl mx-auto">A production-grade voice RAG stack built on cloud speech-to-text, dense retrieval, and context-gated generation with built-in safety controls.</p>
+<section class="cta" id="about">
+  <div class="wrap">
+    <span class="sec-kicker">GET STARTED</span>
+    <h2>Ask it.<br><span class="hl">Don&rsquo;t search for it.</span></h2>
+    <p>Your knowledge base is already there. Give it a voice.</p>
+    <div class="cta-btns">
+      <a class="btn btn-yellow" href="/tester">Open RAGinGOA →</a>
+      <a class="btn" style="color:var(--cream);border-color:var(--cream)" href="/docs">Read Documentation</a>
     </div>
-    
-    <div class="grid md:grid-cols-3 gap-6">
-      <!-- Feature 1 -->
-      <div class="glass-card rounded-2xl p-6 hover:border-brand-500/30 transition group">
-        <div class="w-12 h-12 rounded-xl bg-brand-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-          <svg class="w-6 h-6 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
-        </div>
-        <h3 class="text-lg font-semibold mb-2">Speech-to-Text</h3>
-        <p class="text-sm text-slate-400 leading-relaxed">Primary transcription through Sarvam Saarika v2.5 for Indic language coverage, with faster-whisper local fallback for offline and edge scenarios.</p>
-        <div class="mt-4 flex items-center gap-2">
-          <div class="flex gap-0.5 items-end h-4">
-            <div class="w-1 bg-brand-400 rounded-full wave-bar" style="height: 40%"></div>
-            <div class="w-1 bg-brand-400 rounded-full wave-bar" style="height: 70%"></div>
-            <div class="w-1 bg-brand-400 rounded-full wave-bar" style="height: 100%"></div>
-            <div class="w-1 bg-brand-400 rounded-full wave-bar" style="height: 60%"></div>
-            <div class="w-1 bg-brand-400 rounded-full wave-bar" style="height: 80%"></div>
-          </div>
-          <span class="text-[10px] text-slate-500 font-mono">Sarvam + Whisper fallback</span>
-        </div>
-      </div>
-      
-      <!-- Feature 2 -->
-      <div class="glass-card rounded-2xl p-6 hover:border-violet-500/30 transition group">
-        <div class="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-          <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-        </div>
-        <h3 class="text-lg font-semibold mb-2">Retrieval Engine</h3>
-        <p class="text-sm text-slate-400 leading-relaxed">FAISS dense search over 49,912 passage vectors with optional Cross-Encoder reranking. Hybrid chunking preserves context without degrading precision.</p>
-        <div class="mt-4 flex items-center gap-2 text-[10px] text-slate-500 font-mono">
-          <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">49,912 vectors</span>
-          <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">384-d</span>
-          <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">rerank</span>
-        </div>
-      </div>
-      
-      <!-- Feature 3 -->
-      <div class="glass-card rounded-2xl p-6 hover:border-emerald-500/30 transition group">
-        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-          <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-        </div>
-        <h3 class="text-lg font-semibold mb-2">Answer Safety</h3>
-        <p class="text-sm text-slate-400 leading-relaxed">Unsafe-content filtering, abstention on low-similarity retrieval, and lexical grounding checks ensure responses stay within retrieved context.</p>
-        <div class="mt-4 flex items-center gap-2">
-          <div class="h-1.5 flex-1 rounded-full bg-slate-800 overflow-hidden">
-            <div class="h-full w-[92%] bg-gradient-to-r from-emerald-500 to-brand-400 rounded-full"></div>
-          </div>
-          <span class="text-[10px] text-emerald-300 font-mono">guardrails active</span>
-        </div>
-      </div>
-    </div>
+    <div class="cta-built">— BUILT @ HACKER HOUSE GOA 2026 · GOA, INDIA —</div>
+    <span class="sticker pink cta-hand">build. break. ship. repeat!</span>
+    <svg class="cta-art" viewBox="0 0 100 140" fill="none" stroke="#F5D547" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+      <path d="M40 122l4-58h12l4 58z"/>
+      <path d="M44 104h12M42 86h16"/>
+      <path d="M40 64h20M50 64V50"/>
+      <rect x="43" y="40" width="14" height="10" rx="1"/>
+      <path d="M43 45L24 37M57 45l19-8"/>
+      <path d="M20 126c6-4 12-4 18 0s12 4 18 0 12-4 18 0"/>
+    </svg>
   </div>
 </section>
 
-<!-- Technology / Architecture Section -->
-<section id="technology" class="py-24 relative overflow-hidden">
-  <div class="absolute inset-0 bg-gradient-to-b from-transparent via-brand-900/10 to-transparent"></div>
-  <div class="max-w-7xl mx-auto px-6 relative z-10">
-    <div class="glass-gradient rounded-3xl p-8 md:p-12">
-      <div class="grid lg:grid-cols-2 gap-12 items-center">
-        <div>
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 text-brand-300 text-xs font-medium mb-6 border border-brand-500/20">
-            Technology
-          </div>
-          <h2 class="text-3xl md:text-4xl font-bold mb-4">Built on proven models, not experiments.</h2>
-          <p class="text-slate-400 mb-6 leading-relaxed">
-            RAGinGOA combines cloud-grade speech recognition, dense retrieval, and controlled generation into a single auditable pipeline. Every stage is instrumented for latency, confidence, and compliance.
-          </p>
-          
-          <div class="space-y-3">
-            <div class="flex items-start gap-3">
-              <div class="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center">
-                <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-              </div>
-              <div>
-                <div class="font-medium text-sm">Speech: Sarvam Saarika v2.5</div>
-                <div class="text-xs text-slate-500">Primary STT for hi-IN, en-IN, bn-IN; faster-whisper local fallback</div>
-              </div>
-            </div>
-            <div class="flex items-start gap-3">
-              <div class="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center">
-                <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-              </div>
-              <div>
-                <div class="font-medium text-sm">Retrieval: FAISS + Cross-Encoder</div>
-                <div class="text-xs text-slate-500">49,912 passage vectors, 384-d embeddings, optional reranking</div>
-              </div>
-            </div>
-            <div class="flex items-start gap-3">
-              <div class="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center">
-                <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-              </div>
-              <div>
-                <div class="font-medium text-sm">Generation: Gemini / OpenAI</div>
-                <div class="text-xs text-slate-500">Context-restricted generation with extractive fallback</div>
-              </div>
-            </div>
-            <div class="flex items-start gap-3">
-              <div class="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center">
-                <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-              </div>
-              <div>
-                <div class="font-medium text-sm">Safety: keyword filtering, similarity gate, grounding check</div>
-                <div class="text-xs text-slate-500">Deterministic guardrails at transcript and answer stages</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Right: Voice waveform visualization -->
-        <div class="glass-card rounded-2xl p-6">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <div class="text-xs text-slate-500 mb-1">Platform status</div>
-              <div class="text-sm font-medium text-white">Voice query pipeline active</div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-              <span class="text-[10px] text-emerald-300 font-mono">OPERATIONAL</span>
-            </div>
-          </div>
-          
-          <!-- Waveform -->
-          <div class="h-24 flex items-center justify-center gap-1 mb-6">
-            <div class="w-1.5 h-8 bg-brand-400/60 rounded-full wave-bar"></div>
-            <div class="w-1.5 h-12 bg-brand-400/80 rounded-full wave-bar"></div>
-            <div class="w-1.5 h-16 bg-brand-400 rounded-full wave-bar"></div>
-            <div class="w-1.5 h-20 bg-brand-400 rounded-full wave-bar"></div>
-            <div class="w-1.5 h-24 bg-violet-400 rounded-full wave-bar"></div>
-            <div class="w-1.5 h-20 bg-brand-400 rounded-full wave-bar"></div>
-            <div class="w-1.5 h-16 bg-brand-400 rounded-full wave-bar"></div>
-            <div class="w-1.5 h-12 bg-brand-400/80 rounded-full wave-bar"></div>
-            <div class="w-1.5 h-8 bg-brand-400/60 rounded-full wave-bar"></div>
-            <div class="w-1.5 h-10 bg-brand-400/70 rounded-full wave-bar"></div>
-            <div class="w-1.5 h-14 bg-brand-400 rounded-full wave-bar"></div>
-            <div class="w-1.5 h-18 bg-brand-400 rounded-full wave-bar"></div>
-            <div class="w-1.5 h-22 bg-violet-400 rounded-full wave-bar"></div>
-            <div class="w-1.5 h-16 bg-brand-400 rounded-full wave-bar"></div>
-            <div class="w-1.5 h-10 bg-brand-400/70 rounded-full wave-bar"></div>
-          </div>
-          
-          <div class="grid grid-cols-3 gap-3 text-center">
-            <div class="p-3 rounded-xl bg-white/5">
-              <div class="text-lg font-bold text-white">&lt;5s</div>
-              <div class="text-[10px] text-slate-500">End-to-end voice query</div>
-            </div>
-            <div class="p-3 rounded-xl bg-white/5">
-              <div class="text-lg font-bold text-white">3</div>
-              <div class="text-[10px] text-slate-500">Languages supported</div>
-            </div>
-            <div class="p-3 rounded-xl bg-white/5">
-              <div class="text-lg font-bold text-white">49,912</div>
-              <div class="text-[10px] text-slate-500">Indexed passages</div>
-            </div>
-          </div>
-        </div>
+<footer>
+  <div class="wrap">
+    <div class="f-top">
+      <div class="f-brand">
+        <div class="n">RAGinGOA</div>
+        <div class="t">VOICE × RAG × MULTILINGUAL AI</div>
+      </div>
+      <div class="f-status"><span class="dot" id="footDot"></span><span id="footStatus">CHECKING…</span></div>
+      <div class="f-links">
+        <a href="#" onclick="alert('repo private — ask at the house :)');return false;">GitHub</a>
+        <a href="/docs">Docs</a>
+        <a href="/docs">API</a>
+        <a href="#top">Status</a>
       </div>
     </div>
-  </div>
-</section>
-
-<!-- Logo Bar -->
-<section class="py-16 border-y border-white/5">
-  <div class="max-w-7xl mx-auto px-6">
-    <p class="text-center text-xs text-slate-500 uppercase tracking-widest mb-8">Architecture and infrastructure assumptions</p>
-    <div class="flex flex-wrap justify-center items-center gap-x-12 gap-y-8 opacity-60">
-      <div class="logo-hover flex items-center gap-2 text-slate-300">
-        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M13.966 22.624l-1.69-4.281h-5.924l-1.69 4.281h-3.065l6.255-15.624h3.265l6.255 15.624h-3.066zm-6.824-7.824h4.066l-2.033-5.124-2.033 5.124zM22.624 22.624h-3.066l-2.531-6.624h-4.066l6.255 15.624h3.266l6.255-15.624h-4.066l-2.533 6.624z"/></svg>
-        <span class="font-semibold text-sm tracking-wide">Adobe</span>
-      </div>
-      <div class="logo-hover flex items-center gap-2 text-slate-300">
-        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2h-11l-2 20h11l2-20zm2 20h-17l-2-20h17l2 20z"/></svg>
-        <span class="font-semibold text-sm tracking-wide">Intel</span>
-      </div>
-      <div class="logo-hover flex items-center gap-2 text-slate-300">
-        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        <span class="font-semibold text-sm tracking-wide">Google</span>
-      </div>
-      <div class="logo-hover flex items-center gap-2 text-slate-300">
-        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/></svg>
-        <span class="font-semibold text-sm tracking-wide">Microsoft</span>
-      </div>
-      <div class="logo-hover flex items-center gap-2 text-slate-300">
-        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/></svg>
-        <span class="font-semibold text-sm tracking-wide">NVIDIA</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- CTA Section -->
-<section class="py-24">
-  <div class="max-w-4xl mx-auto px-6 text-center">
-    <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to deploy voice retrieval?</h2>
-    <p class="text-slate-400 mb-8 max-w-2xl mx-auto">RAGinGOA is designed for teams that need auditable, multilingual, voice-enabled access to document knowledge bases. Request access for a controlled deployment.</p>
-    <div class="flex flex-wrap justify-center gap-4">
-      <a href="http://localhost:8000" class="px-8 py-3.5 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition flex items-center gap-2">
-        Open App
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-      </a>
-      <a href="#" class="px-8 py-3.5 rounded-xl glass hover:bg-white/5 transition font-medium">
-        Read Documentation
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- Footer -->
-<footer class="border-t border-white/5 py-12">
-  <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-    <div class="flex items-center gap-2">
-      <div class="w-6 h-6 rounded bg-gradient-to-br from-brand-400 to-violet-500 flex items-center justify-center">
-        <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
-      </div>
-      <span class="font-semibold text-sm">RAGinGOA</span>
-    </div>
-    <div class="text-xs text-slate-500">
-      Â© 2025 RAGinGOA. Enterprise voice retrieval platform.
-    </div>
-    <div class="flex items-center gap-4 text-xs text-slate-500">
-      <a href="#" class="hover:text-white transition">Documentation</a>
-      <a href="#" class="hover:text-white transition">API</a>
-      <a href="#" class="hover:text-white transition">Status</a>
+    <div class="f-bottom">
+      <span>© 2026 HH GOA</span>
+      <span class="f-baddie"><b>✶</b> BADDIE DETECTORS: <span id="baddieN">0</span> ACTIVE</span>
+      <span>BUILD. BREAK. SHIP. REPEAT.</span>
     </div>
   </div>
 </footer>
 
 <script>
-  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function(e) {
-      e.preventDefault();
-      const target = document.querySelector(this.getAttribute('href'));
-      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  });
-  
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('animate-fade-in-up');
-        entry.target.style.opacity = '1';
-      }
-    });
-  }, { threshold: 0.1 });
-  
-  document.querySelectorAll('section > div').forEach(el => {
-    el.style.opacity = '0';
-    observer.observe(el);
-  });
-  
-  document.querySelector('section:first-of-type > div').style.opacity = '1';
-</script>
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const t = document.querySelector(a.getAttribute('href'));
+    if (t) { e.preventDefault(); t.scrollIntoView({ behavior:'smooth', block:'start' }); }
+  });
+});
+
+const io = new IntersectionObserver(es => es.forEach(en => {
+  if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+}), { threshold:.12 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+async function checkHealth(){
+  try {
+    const r = await fetch('/health');
+    const j = await r.json();
+    const ok = !!j.index_loaded;
+    $('navDot').className = 'dot ' + (ok ? 'on' : 'off');
+    $('navSys').textContent = ok ? 'SYSTEM ONLINE' : 'DEGRADED';
+    $('footDot').className = 'dot ' + (ok ? 'on' : 'off');
+    $('footStatus').textContent = ok ? 'ALL SYSTEMS OPERATIONAL' : 'PARTIAL OUTAGE';
+    $('lcStatus').textContent = ok ? 'ONLINE' : 'OFFLINE';
+    if (j.ntotal) {
+      const n = j.ntotal.toLocaleString('en-IN');
+      $('vecHero').textContent = n;
+      $('vecBig').textContent = n;
+    }
+    $('baddieN').textContent = String(j.baddie_detectors ?? 0);
+  } catch {
+    $('navDot').className = 'dot off';
+    $('navSys').textContent = 'OFFLINE';
+    $('footDot').className = 'dot off';
+    $('footStatus').textContent = 'API OFFLINE';
+    $('lcStatus').textContent = 'OFFLINE';
+  }
+}
+checkHealth();
+
+(async function heroLoop(){
+  const q = '"What is the leave policy?"';
+  while (true){
+    ['mlStt','mlSttOk','mlRet','mlGrnd'].forEach(id => $(id).classList.remove('show'));
+    $('mockSrcs').classList.remove('show');
+    $('mockAns').classList.remove('show');
+    $('mockFoot').classList.remove('show');
+    $('mockWave').classList.remove('show');
+    const qEl = $('mockQ');
+    qEl.classList.remove('done');
+    qEl.textContent = '';
+    await sleep(700);
+    $('mockWave').classList.add('show');
+    for (let i=0;i<q.length;i++){ qEl.textContent += q[i]; await sleep(42); }
+    qEl.classList.add('done');
+    $('mlStt').classList.add('show');
+    await sleep(1300);
+    $('mlSttOk').classList.add('show');
+    $('mockWave').classList.remove('show');
+    $('mlRet').classList.add('show');
+    await sleep(900);
+    $('mockSrcs').classList.add('show');
+    await sleep(800);
+    $('mlRet').style.display='none';
+    $('mlGrnd').classList.add('show');
+    $('mockAns').classList.add('show');
+    $('mockFoot').classList.add('show');
+    await sleep(4200);
+    $('mlRet').style.display='';
+  }
+})();
+
+document.querySelectorAll('.chip').forEach(ch => ch.addEventListener('click', () => {
+  $('demoQ').value = ch.textContent.trim();
+  $('demoQ').focus();
+}));
+
+function lcStage(txt, done){
+  const div = document.createElement('div');
+  div.innerHTML = done ? `<span class="done">✓ ${txt}</span>` : `&gt; ${txt}<span style="animation:blink .8s steps(1) infinite">▌</span>`;
+  return div;
+}
+
+$('demoForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const q = $('demoQ').value.trim();
+  if (!q){ $('demoQ').focus(); return; }
+  const btn = $('demoBtn');
+  btn.disabled = true; btn.textContent = 'RUNNING…';
+
+  const out = $('lcOut');
+  out.classList.add('show');
+  $('lcErr').style.display = 'none';
+  $('lcSrcBlock').style.display = 'none';
+  $('lcAnsBlock').style.display = 'none';
+  $('lcTranscript').textContent = q;
+
+  const stages = $('lcStages');
+  stages.innerHTML = '';
+  const NAMES = ['EMBEDDING QUERY','RETRIEVING CONTEXT','VERIFYING GROUNDING','GENERATING ANSWER'];
+  const rows = NAMES.map(n => lcStage(n));
+  rows.forEach(r => stages.appendChild(r));
+  let si = 0;
+  const adv = setInterval(() => {
+    if (si > 0 && si <= rows.length) stages.children[si-1].innerHTML = `<span class="done">✓ ${NAMES[si-1]}</span>`;
+    if (si < rows.length) stages.children[si].innerHTML = `&gt; ${NAMES[si]}<span style="animation:blink .8s steps(1) infinite">▌</span>`;
+    si++;
+  }, 550);
+
+  try {
+    const fd = new FormData();
+    fd.append('query', q);
+    fd.append('k', '4');
+    fd.append('rerank', 'true');
+    const r = await fetch('/query', { method:'POST', body:fd });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+
+    clearInterval(adv);
+    stages.innerHTML = '';
+    const act0 = j.guardrail && j.guardrail.action;
+    const halted = act0 === 'block' || act0 === 'abstain' || act0 === 'reject';
+    const isVoice = j.timings && j.timings.stt_ms > 0;
+    if (isVoice) stages.appendChild(lcStageDone(`TRANSCRIBED VIA ${j.stt.provider_used}`));
+    stages.appendChild(lcStageDone(`EMBEDDED · ${(j.retrieved||[]).length} CANDIDATES`));
+    if (halted){
+      stages.appendChild(lcStageDone(`HALTED · ${(act0||'').toUpperCase()} GUARDRAIL`));
+    } else {
+      stages.appendChild(lcStageDone(act0 === 'flag' ? 'GROUNDING FLAGGED ⚠' : 'GROUNDING PASSED'));
+      stages.appendChild(lcStageDone(`ANSWER GENERATED · ${j.provider || 'LLM'}`));
+    }
+
+    const srcs = $('lcSrcs');
+    srcs.innerHTML = '';
+    (j.retrieved || []).forEach((c,i) => {
+      const pct = Math.max(0, Math.min(100, Math.round((c.score||0)*100)));
+      const row = document.createElement('div');
+      row.className = 'lc-src';
+      row.innerHTML =
+        `<span class="n">${String(i+1).padStart(2,'0')}</span>` +
+        `<div><div class="d">${esc(c.doc_id||'doc')}</div><div class="strat">${esc(c.strategy||'chunk')}</div></div>` +
+        `<div class="lc-bar"><i style="width:${pct}%"></i></div>`;
+      srcs.appendChild(row);
+    });
+    $('lcSrcBlock').style.display = srcs.children.length ? 'block' : 'none';
+
+    const ansEl = $('lcAnswer');
+    const act = j.guardrail && j.guardrail.action;
+    ansEl.textContent = j.answer == null ? '(no answer produced)' : j.answer;
+    ansEl.className = 'lc-answer' + ((act && act !== 'allow' && act !== 'flag') || !j.answer ? ' muted' : '');
+
+    const meta = $('lcMeta');
+    meta.innerHTML = '';
+    const h = j.hallucination || {};
+    let conf = '—';
+    if (typeof h.embed_sim === 'number') conf = Math.round(h.embed_sim*100)+'%';
+    else if (typeof h.hit_rate === 'number') conf = Math.round(h.hit_rate*100)+'%';
+    addPill(meta, act === 'block' ? ['w','BLOCKED'] : act === 'abstain' ? ['w','ABSTAINED'] :
+      act === 'reject' ? ['w','REJECTED'] : act === 'flag' ? ['w','UNGROUNDED ⚠'] : ['g','GROUNDED ✓']);
+    addPill(meta, ['', 'CONFIDENCE ' + conf]);
+    addPill(meta, ['', '⏱ ' + ((j.timings && j.timings.total_ms) || '?') + 'ms']);
+    $('lcProv').textContent = 'via ' + (j.provider || 'llm');
+    $('lcAnsBlock').style.display = 'block';
+  } catch (err) {
+    clearInterval(adv);
+    $('lcErr').style.display = 'block';
+    $('lcErr').textContent = '⚠ API unreachable — start the server: python -m uvicorn app.main:app --port 8000';
+  } finally {
+    btn.disabled = false; btn.textContent = 'RUN →';
+  }
+});
+
+function lcStageDone(txt){
+  const div = document.createElement('div');
+  div.innerHTML = `<span class="done">✓ ${esc(txt)}</span>`;
+  return div;
+}
+function addPill(parent, cls_txt){
+  const [cls, txt] = cls_txt;
+  const s = document.createElement('span');
+  s.className = 'lc-pill' + (cls ? ' ' + cls : '');
+  s.textContent = txt;
+  parent.appendChild(s);
+}
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+</script>
 </body>
 </html>

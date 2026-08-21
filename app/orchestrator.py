@@ -68,11 +68,20 @@ def run_pipeline(
 
     if g["action"] == "allow" and g.get("reason") == "greeting":
         import random
-        ans = random.choice([
-            "Namaste! I'm RAGinGOA. Ask me anything in Hindi, English, or Bengali.",
-            "Hello! I'm RAGinGOA. How can I help you today?",
-            "Hi there! RAGinGOA here — ready to answer your questions from the knowledge base.",
-        ])
+        q = (query_text or "").strip()
+        is_hindi = any("\u0900" <= ch <= "\u097F" for ch in q)
+        if is_hindi:
+            ans = random.choice([
+                "नमस्ते! मैं RAGinGOA हूँ। हिंदी, English या Bengali में कुछ भी पूछें।",
+                "नमस्कार! मैं RAGinGOA हूँ। आज मैं आपकी क्या मदद कर सकता हूँ?",
+                "प्रणाम! मैं RAGinGOA हूँ — knowledge base से किसी भी सवाल का जवाब देने के लिए तैयार हूँ।",
+            ])
+        else:
+            ans = random.choice([
+                "Namaste! I'm RAGinGOA. Ask me anything in Hindi, English, or Bengali.",
+                "Hello! I'm RAGinGOA. How can I help you today?",
+                "Hi there! I'm RAGinGOA — ready to answer your questions from the knowledge base.",
+            ])
         total = (time.perf_counter() - t0) * 1000
         timings["llm_ms"] = 0
         timings["total_ms"] = round(total, 2)

@@ -1,3 +1,4 @@
+import json
 import logging
 import shutil
 import tempfile
@@ -6,9 +7,9 @@ import time
 from contextlib import suppress
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 
 from .config import (
     AUDIO_EXTENSIONS,
@@ -23,7 +24,10 @@ from .config import (
 )
 from .embed import FaissIndex
 from .harness import atranscribe_with_harness
+from .guardrails import check_guardrails
+from .llm import generate_answer, generate_answer_stream
 from .orchestrator import run_pipeline
+from .retrieval import retrieve
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -126,10 +130,34 @@ def speak(text: str = Form(...)):
     clean = text.strip()[:1000]
     if not clean:
         raise HTTPException(400, "empty text")
-    lang = "hi" if any("\u0900" <= ch <= "\u097F" for ch in clean) else "en"
+    # Try Sarvam TTS first for better Indic/Hinglish quality
+    sarvam_tts_key = os.getenv("SARVAM_API_KEY", "").strip()
+    if sarvam_tts_key:
+        try:
+            from sarvamai import SarvamAI
+
+            lang = "hi-IN" if any("\u0900" <= ch <= "\u097F" for ch in clean) else "en-IN"
+            speaker = "manisha" if lang == "hi-IN" else "anushka"
+            client = SarvamAI(api_subscription_key=sarvam_tts_key)
+            audio_chunks = client.text_to_speech.convert_stream(
+                text=clean,
+                language_code=lang,
+                speaker=speaker,
+                model="bulbul:v3",
+                output_audio_codec="mp3",
+                output_audio_bitrate="128k",
+            )
+            buf = io.BytesIO(b"".join(audio_chunks))
+            buf.seek(0)
+            return Response(content=buf.read(), media_type="audio/mpeg")
+        except Exception as e:
+            logger.warning("Sarvam TTS failed (%s); falling back to gTTS", e)
+
+    # Fallback: gTTS
     try:
         from gtts import gTTS
 
+        lang = "hi" if any("\u0900" <= ch <= "\u097F" for ch in clean) else "en"
         buf = io.BytesIO()
         gTTS(text=clean, lang=lang).write_to_fp(buf)
     except Exception as e:
@@ -197,6 +225,36 @@ def query_text(
         raise HTTPException(503, "Index not built. Run build_index.py first.")
     out = _run_and_track(query_text=query, audio_path=None, language_code="hi-IN", index=idx, k=_clamp_k(k), use_rerank=bool(rerank), stt_provider=STT_PROVIDER)
     return JSONResponse(out)
+
+
+@app.post("/query-stream")
+async def query_stream(
+    request: Request,
+    query: str = Form(...),
+    k: int = Form(DEFAULT_K),
+    rerank: bool = Form(False),
+):
+    idx = get_index()
+    if idx is None:
+        raise HTTPException(503, "Index not built. Run build_index.py first.")
+
+    async def event_stream():
+        try:
+            ret = retrieve(query, idx, _clamp_k(k), use_rerank=bool(rerank))
+            chunks = ret["results"]
+            g = check_guardrails(query, chunks)
+            if g["action"] != "allow":
+                yield f"event: guardrail\ndata: {json.dumps(g)}\n\n"
+                return
+            full = ""
+            for chunk in generate_answer_stream(query, chunks):
+                full += chunk
+                yield 'event: token\ndata: ' + json.dumps({"text": chunk}) + '\n\n'
+            yield 'event: done\ndata: ' + json.dumps({"text": full}) + '\n\n'
+        except Exception as e:
+            yield 'event: error\ndata: ' + json.dumps({"error": str(e)}) + '\n\n'
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 @app.post("/voice-query")

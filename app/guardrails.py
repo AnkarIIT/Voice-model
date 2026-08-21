@@ -17,7 +17,7 @@ UNSAFE_RE = re.compile(
 )
 
 GREETING_RE = re.compile(
-    r"^(?:hi|hello|hey|namaste|namaskar|good\s*(?:morning|afternoon|evening)|howdy|greetings|hola|hiya|yo|नमस्ते|नमस्कार|प्रणाम|सुप्रभात|शुभकामनाएं)[\s!,.]*$",
+    r"^(?:hi|hello|hey|namaste|namaskar|good\s*(?:morning|afternoon|evening)|howdy|greetings|hola|hiya|yo|नमस्ते|नमस्कार|प्रणाम|सुप्रभात|शुभकामनाएं|सत्य)[\s!,.]*$",
     re.IGNORECASE,
 )
 
@@ -25,6 +25,12 @@ GREETING_ANSWERS = [
     "Namaste! I'm RAGinGOA. Ask me anything in Hindi, English, or Bengali.",
     "Hello! I'm RAGinGOA. How can I help you today?",
     "Hi there! I'm RAGinGOA — ready to answer your questions from the knowledge base.",
+]
+
+HINDI_GREETING_ANSWERS = [
+    "नमस्ते! मैं RAGinGOA हूँ। हिंदी, English या Bengali में कुछ भी पूछें।",
+    "नमस्कार! मैं RAGinGOA हूँ। आज मैं आपकी क्या मदद कर सकता हूँ?",
+    "प्रणाम! मैं RAGinGOA हूँ — knowledge base से किसी भी सवाल का जवाब देने के लिए तैयार हूँ।",
 ]
 
 

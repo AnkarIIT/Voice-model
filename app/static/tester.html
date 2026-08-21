@@ -324,6 +324,7 @@ footer .sig{font-weight:700;letter-spacing:2px;color:var(--green-dark)}
         <span class="ctrl">TOP-K <select id="k"><option>3</option><option selected>5</option><option>10</option></select></span>
         <label class="switch"><input type="checkbox" id="rerank"> RERANK (CROSS-ENCODER)</label>
         <label class="switch"><input type="checkbox" id="speakToggle" checked> 🔊 BOLKE SUNAO</label>
+        <label class="switch"><input type="checkbox" id="streamToggle"> STREAM</label>
         <label class="switch">📁 UPLOAD AUDIO <input type="file" id="file" accept=".wav,.mp3,.m4a,.flac,.ogg,.webm,.mp4,audio/*" hidden><span class="file-chip" id="fileChip"></span></label>
       </div>
 
@@ -474,32 +475,72 @@ async function submitQuery(){
   busy(true);
 
   try {
-    let j;
-    if (out) {
-      const fd = new FormData();
-      fd.append("file", out, pendingName || out.name || "mic.webm");
-      fd.append("language_code", $("lang").value);
-      fd.append("k", $("k").value);
-      fd.append("stt_provider", $("sttProvider").value);
-      const r = await fetch(API + "/voice-query", { method: "POST", body: fd });
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      j = await r.json();
+    if ($("streamToggle").checked && !out) {
+      await streamQuery(q);
     } else {
-      const fd = new FormData();
-      fd.append("query", q);
-      fd.append("k", $("k").value);
-      fd.append("rerank", $("rerank").checked);
-      const r = await fetch(API + "/query", { method: "POST", body: fd });
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      j = await r.json();
+      let j;
+      if (out) {
+        const fd = new FormData();
+        fd.append("file", out, pendingName || out.name || "mic.webm");
+        fd.append("language_code", $("lang").value);
+        fd.append("k", $("k").value);
+        fd.append("stt_provider", $("sttProvider").value);
+        const r = await fetch(API + "/voice-query", { method: "POST", body: fd });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        j = await r.json();
+      } else {
+        const fd = new FormData();
+        fd.append("query", q);
+        fd.append("k", $("k").value);
+        fd.append("rerank", $("rerank").checked);
+        const r = await fetch(API + "/query", { method: "POST", body: fd });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        j = await r.json();
+      }
+      render(j);
     }
-    render(j);
   } catch (e) {
     showError(e.message);
     $("cursorLine").textContent = "pipeline error — see message above";
   } finally {
     busy(false);
   }
+}
+
+async function streamQuery(q){
+  const fd = new FormData();
+  fd.append("query", q);
+  fd.append("k", $("k").value);
+  fd.append("rerank", $("rerank").checked);
+  const r = await fetch(API + "/query-stream", { method: "POST", body: fd });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const reader = r.body.getReader();
+  const dec = new TextDecoder();
+  let full = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const txt = dec.decode(value, { stream: true });
+    const lines = txt.split("\n");
+    for (const line of lines) {
+      const m = line.match(/^event: (\w+)\ndata: (.+)$/s);
+      if (!m) continue;
+      const ev = m[1];
+      const data = JSON.parse(m[2]);
+      if (ev === "token") {
+        full += data.text;
+        $("ansText").textContent = full;
+        $("answerCard").classList.add("show");
+      } else if (ev === "guardrail") {
+        $("cursorLine").textContent = "guardrail:" + data.action;
+        $("answerCard").classList.add("show");
+        $("ansText").textContent = data.answer || "Blocked";
+      } else if (ev === "error") {
+        showError(data.error);
+      }
+    }
+  }
+  $("cursorLine").textContent = `streamed query=\"${q.slice(0,42)}\"`;
 }
 
 function busy(on){

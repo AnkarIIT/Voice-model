@@ -72,6 +72,27 @@ def generate_answer(query: str, chunks: list, max_tokens: int = 256):
     return _extractive_fallback(query, chunks), (time.perf_counter() - t0) * 1000, "extractive-fallback"
 
 
+def generate_answer_stream(query: str, chunks: list, max_tokens: int = 256):
+    gem_key = os.getenv("GEMINI_API_KEY", "").strip()
+    open_key = os.getenv("OPENAI_API_KEY", "").strip()
+    model = os.getenv("LLM_MODEL", "gemini-3.6-flash")
+
+    if gem_key:
+        yield from _stream_gemini(query, chunks, gem_key, model, max_tokens)
+        return
+    if open_key:
+        openai_model = model if "gpt" in model else "gpt-4o-mini"
+        yield from _stream_openai(build_prompt(query, chunks), open_key, openai_model, max_tokens)
+        return
+    if os.getenv("USE_LOCAL_LLM", "0").strip().lower() in {"1", "true", "yes"}:
+        local_model = model if "flan" in model else os.getenv("LOCAL_LLM_MODEL", "google/flan-t5-base")
+        text = _try_local(build_prompt(query, chunks), local_model, max_tokens)
+        if text:
+            yield text
+            return
+    yield _extractive_fallback(query, chunks)
+
+
 def _try_gemini(query, chunks, key, model, max_tokens):
     global _GENAI_CLIENT
     try:
@@ -96,6 +117,32 @@ def _try_gemini(query, chunks, key, model, max_tokens):
     except Exception as e:
         logger.warning("gemini failed: %s", e)
     return None
+
+
+def _stream_gemini(query, chunks, key, model, max_tokens):
+    global _GENAI_CLIENT
+    try:
+        from google import genai
+        from google.genai import types
+
+        if _GENAI_CLIENT is None:
+            _GENAI_CLIENT = genai.Client(api_key=key)
+        stream = _GENAI_CLIENT.models.generate_content_stream(
+            model=model,
+            contents=_gemini_contents(query, chunks),
+            config=types.GenerateContentConfig(
+                system_instruction=SYS_PROMPT,
+                max_output_tokens=max_tokens,
+                temperature=0.2,
+            ),
+        )
+        for chunk in stream:
+            text = (getattr(chunk, "text", None) or "").strip()
+            if text:
+                yield text
+    except Exception as e:
+        logger.warning("gemini stream failed: %s", e)
+        yield _extractive_fallback(query, chunks)
 
 
 def _gemini_contents(query: str, chunks: list) -> str:
@@ -125,6 +172,31 @@ def _try_openai(prompt, key, model, max_tokens):
     except Exception as e:
         logger.warning("openai failed: %s", e)
     return None
+
+
+def _stream_openai(prompt, key, model, max_tokens):
+    try:
+        from openai import OpenAI
+
+        c = OpenAI(api_key=key, timeout=REQUEST_TIMEOUT_S)
+        stream = c.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": SYS_PROMPT},
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=max_tokens,
+            temperature=0.2,
+            timeout=REQUEST_TIMEOUT_S,
+            stream=True,
+        )
+        for chunk in stream:
+            delta = chunk.choices[0].delta.content if chunk.choices else None
+            if delta:
+                yield delta
+    except Exception as e:
+        logger.warning("openai stream failed: %s", e)
+        yield _extractive_fallback_from_prompt(prompt)
 
 
 def _try_local(prompt, model, max_tokens):
@@ -157,3 +229,13 @@ def _extractive_fallback(query: str, chunks: list) -> str:
         else top[:400]
     )
     return (best or top)[:600]
+
+
+def _extractive_fallback_from_prompt(prompt: str) -> str:
+    # crude fallback when streaming openai fails
+    ctx_marker = "Context:\n"
+    if ctx_marker in prompt:
+        after = prompt.split(ctx_marker, 1)[1]
+        first = after.split("\n\n", 1)[0]
+        return first.split(" (score:", 1)[0].strip()[:600]
+    return prompt[:600]
