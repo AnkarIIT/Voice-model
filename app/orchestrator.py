@@ -110,10 +110,11 @@ def run_pipeline(
     ans, llm_ms, prov = generate_answer(query_text, chunks, conversation_history=conversation_history)
     timings["llm_ms"] = round(llm_ms, 2)
     h = hallucination_check(ans, chunks, encoder=getattr(index, "model", None))
-    is_follow_up = (g.get("reason") or "").startswith("follow_up")
-    if h["grounded"] or is_follow_up:
+    from .guardrails import answer_draws_on_history
+
+    if h["grounded"] or answer_draws_on_history(ans, conversation_history):
         guardrail = g
-        if is_follow_up and not h.get("grounded"):
+        if not h.get("grounded"):
             h = {**h, "grounded": True, "method": "history_follow_up"}
     else:
         logger.info("answer flagged ungrounded (hit_rate=%s)", h.get("hit_rate"))

@@ -57,7 +57,8 @@ def answer_draws_on_history(answer: str, history: list, min_ratio: float = 0.45)
     return overlap >= min_ratio
 
 
-def screen_text(text: str) -> dict:    t = (text or "").strip()
+def screen_text(text: str) -> dict:
+    t = (text or "").strip()
     if len(t) < 2:
         return {"action": "reject", "reason": "too_short_or_empty"}
     if UNSAFE_RE.search(t):

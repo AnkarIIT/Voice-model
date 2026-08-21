@@ -327,10 +327,10 @@ async def query_stream(
             for chunk in generate_answer_stream(query, chunks, conversation_history=history):
                 full += chunk
                 yield _sse("token", {"text": chunk})
-            from .guardrails import hallucination_check
+            from .guardrails import answer_draws_on_history, hallucination_check
 
             h = hallucination_check(full, chunks, encoder=getattr(idx, "model", None))
-            if (g.get("reason") or "").startswith("follow_up") and not h.get("grounded"):
+            if not h.get("grounded") and answer_draws_on_history(full, history):
                 h = {**h, "grounded": True, "method": "history_follow_up"}
             total = (time.perf_counter() - t0) * 1000
             llm_ms = (time.perf_counter() - llm_t0) * 1000
