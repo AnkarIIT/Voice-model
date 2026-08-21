@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -14,12 +15,16 @@ from fastapi.responses import FileResponse, JSONResponse, Response, StreamingRes
 
 from .config import (
     AUDIO_EXTENSIONS,
+    BASE_DIR,
     CORS_ORIGINS,
     DEFAULT_K,
     INDEX_DIR,
     MAX_K,
     MAX_UPLOAD_MB,
     STT_PROVIDER,
+    TTS_MODEL,
+    TTS_SPEAKER_EN,
+    TTS_SPEAKER_HI,
     WHISPER_DEVICE,
     setup_logging,
 )
@@ -45,12 +50,29 @@ _INDEX = None
 _INDEX_LOCK = threading.Lock()
 _BADDIE_COUNT = 0
 _BADDIE_LOCK = threading.Lock()
+_HISTORY: dict[str, list] = {}
+_HISTORY_LOCK = threading.Lock()
+MAX_HISTORY = 10
 
 
 def _inc_baddie():
     global _BADDIE_COUNT
     with _BADDIE_LOCK:
         _BADDIE_COUNT += 1
+
+
+def _get_history(session_id: str) -> list:
+    with _HISTORY_LOCK:
+        return list(_HISTORY.get(session_id, []))
+
+
+def _add_history(session_id: str, query: str, answer: str):
+    with _HISTORY_LOCK:
+        hist = _HISTORY.setdefault(session_id, [])
+        hist.append({"role": "user", "text": query})
+        hist.append({"role": "assistant", "text": answer})
+        if len(hist) > MAX_HISTORY:
+            del hist[: len(hist) - MAX_HISTORY]
 
 
 def get_index() -> FaissIndex:
@@ -124,6 +146,15 @@ def tester():
     return FileResponse(Path(__file__).parent / "static" / "tester.html")
 
 
+def _detect_tts_lang(text: str) -> str:
+    for ch in text:
+        if "\u0900" <= ch <= "\u097F":
+            return "hi-IN"
+        if "\u0980" <= ch <= "\u09FF":
+            return "bn-IN"
+    return "en-IN"
+
+
 @app.post("/speak")
 def speak(text: str = Form(...)):
     import io
@@ -137,14 +168,14 @@ def speak(text: str = Form(...)):
         try:
             from sarvamai import SarvamAI
 
-            lang = "hi-IN" if any("\u0900" <= ch <= "\u097F" for ch in clean) else "en-IN"
-            speaker = "manisha" if lang == "hi-IN" else "anushka"
+            lang = _detect_tts_lang(clean)
+            speaker = {"hi-IN": TTS_SPEAKER_HI, "bn-IN": TTS_SPEAKER_HI}.get(lang, TTS_SPEAKER_EN)
             client = SarvamAI(api_subscription_key=sarvam_tts_key)
             audio_chunks = client.text_to_speech.convert_stream(
                 text=clean,
                 language_code=lang,
                 speaker=speaker,
-                model="bulbul:v3",
+                model=TTS_MODEL,
                 output_audio_codec="mp3",
                 output_audio_bitrate="128k",
             )
@@ -158,9 +189,9 @@ def speak(text: str = Form(...)):
     try:
         from gtts import gTTS
 
-        lang = "hi" if any("\u0900" <= ch <= "\u097F" for ch in clean) else "en"
+        gtts_lang = _detect_tts_lang(clean).split("-")[0]
         buf = io.BytesIO()
-        gTTS(text=clean, lang=lang).write_to_fp(buf)
+        gTTS(text=clean, lang=gtts_lang).write_to_fp(buf)
     except Exception as e:
         logger.warning("TTS failed: %s", e)
         raise HTTPException(502, "text-to-speech failed upstream")
@@ -176,6 +207,12 @@ def health():
 @app.get("/baddies")
 def baddies():
     return {"baddie_detectors": _BADDIE_COUNT}
+
+
+@app.get("/history")
+def history_endpoint(session_id: str = "default"):
+    turns = _get_history(session_id)
+    return {"session_id": session_id, "turns": turns, "count": len(turns) // 2}
 
 
 @app.post("/transcribe")
@@ -200,7 +237,7 @@ async def transcribe(
             tmp_path.unlink()
 
 
-def _run_and_track(query_text, audio_path, language_code, index, k, use_rerank, stt_provider):
+def _run_and_track(query_text, audio_path, language_code, index, k, use_rerank, stt_provider, session_id=None, conversation_history=None):
     out = run_pipeline(
         query_text=query_text,
         audio_path=audio_path,
@@ -209,10 +246,18 @@ def _run_and_track(query_text, audio_path, language_code, index, k, use_rerank, 
         k=k,
         use_rerank=use_rerank,
         stt_provider=stt_provider,
+        conversation_history=conversation_history,
     )
     if out.get("guardrail", {}).get("action") == "block":
         _inc_baddie()
+    if session_id and out.get("answer"):
+        _add_history(session_id, query_text or "", out["answer"])
+    out["session_id"] = session_id
     return out
+
+
+def _sse(event: str, payload: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
 
 @app.post("/query")
@@ -220,11 +265,13 @@ def query_text(
     query: str = Form(...),
     k: int = Form(DEFAULT_K),
     rerank: bool = Form(False),
+    session_id: str = Form(None),
 ):
     idx = get_index()
     if idx is None:
         raise HTTPException(503, "Index not built. Run build_index.py first.")
-    out = _run_and_track(query_text=query, audio_path=None, language_code="hi-IN", index=idx, k=_clamp_k(k), use_rerank=bool(rerank), stt_provider=STT_PROVIDER)
+    history = _get_history(session_id)
+    out = _run_and_track(query_text=query, audio_path=None, language_code="hi-IN", index=idx, k=_clamp_k(k), use_rerank=bool(rerank), stt_provider=STT_PROVIDER, session_id=session_id, conversation_history=history)
     return JSONResponse(out)
 
 
@@ -234,28 +281,78 @@ async def query_stream(
     query: str = Form(...),
     k: int = Form(DEFAULT_K),
     rerank: bool = Form(False),
+    session_id: str = Form(None),
 ):
     idx = get_index()
     if idx is None:
         raise HTTPException(503, "Index not built. Run build_index.py first.")
 
+    def _build() -> dict:
+        ret = retrieve(query, idx, _clamp_k(k), use_rerank=bool(rerank))
+        return ret
+
     async def event_stream():
+        t0 = time.perf_counter()
         try:
-            ret = retrieve(query, idx, _clamp_k(k), use_rerank=bool(rerank))
+            ret = await asyncio.to_thread(_build)
             chunks = ret["results"]
             g = check_guardrails(query, chunks)
+            yield _sse("stage", {
+                "stage": "retrieval",
+                "retrieved": chunks,
+                "search_ms": ret["search_ms"],
+                "total_ms": ret["total_ms"],
+                "reranked": ret["reranked"],
+            })
             if g["action"] != "allow":
-                yield f"event: guardrail\ndata: {json.dumps(g)}\n\n"
+                out = {
+                    "status": g["action"],
+                    "query": query,
+                    "stt": {"text": query, "provider_used": "text-input"},
+                    "retrieved": [],
+                    "retrieval": {"search_ms": ret["search_ms"], "total_ms": ret["total_ms"], "reranked": ret["reranked"]},
+                    "answer": g.get("answer", ""),
+                    "guardrail": g,
+                    "hallucination": {"grounded": False},
+                    "provider": "guardrail",
+                    "timings": {"retrieval_ms": round(ret["total_ms"], 2), "llm_ms": 0, "total_ms": round((time.perf_counter() - t0) * 1000, 2)},
+                    "session_id": session_id,
+                }
+                yield _sse("guardrail", g)
+                yield _sse("done", out)
                 return
             full = ""
-            for chunk in generate_answer_stream(query, chunks):
+            llm_t0 = time.perf_counter()
+            history = _get_history(session_id)
+            for chunk in generate_answer_stream(query, chunks, conversation_history=history):
                 full += chunk
-                yield 'event: token\ndata: ' + json.dumps({"text": chunk}) + '\n\n'
-            yield 'event: done\ndata: ' + json.dumps({"text": full}) + '\n\n'
-        except Exception as e:
-            yield 'event: error\ndata: ' + json.dumps({"error": str(e)}) + '\n\n'
+                yield _sse("token", {"text": chunk})
+            from .guardrails import hallucination_check
 
-    return StreamingResponse(event_stream(), media_type="text/event-stream")
+            h = hallucination_check(full, chunks, encoder=getattr(idx, "model", None))
+            total = (time.perf_counter() - t0) * 1000
+            llm_ms = (time.perf_counter() - llm_t0) * 1000
+            prov = os.getenv("LLM_PROVIDER", "gemini")
+            out = {
+                "status": "ok",
+                "query": query,
+                "stt": {"text": query, "provider_used": "text-input"},
+                "retrieved": chunks,
+                "retrieval": {"search_ms": ret["search_ms"], "total_ms": ret["total_ms"], "reranked": ret["reranked"]},
+                "answer": full,
+                "guardrail": g,
+                "hallucination": h,
+                "provider": prov,
+                "timings": {"retrieval_ms": round(ret["total_ms"], 2), "llm_ms": round(llm_ms, 2), "total_ms": round(total, 2)},
+                "session_id": session_id,
+            }
+            _add_history(session_id, query, full)
+            yield _sse("done", out)
+        except Exception as e:
+            logger.exception("stream failed")
+            yield _sse("error", {"error": str(e)})
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @app.post("/voice-query")
@@ -264,18 +361,22 @@ async def voice_query(
     language_code: str = Form("hi-IN"),
     k: int = Form(DEFAULT_K),
     stt_provider: str = Form("sarvam"),
+    session_id: str = Form(None),
 ):
     idx = get_index()
     if idx is None:
         raise HTTPException(503, "Index not built. Run build_index.py first.")
     tmp_path = await _save_upload(file)
     try:
+        history = _get_history(session_id)
         out = await run_pipeline_async(
             audio_path=tmp_path,
             language_code=language_code,
             index=idx,
             k=_clamp_k(k),
             stt_provider=stt_provider,
+            session_id=session_id,
+            conversation_history=history,
         )
         if out.get("guardrail", {}).get("action") == "block":
             _inc_baddie()
@@ -283,6 +384,18 @@ async def voice_query(
     finally:
         with suppress(OSError):
             tmp_path.unlink()
+
+
+@app.get("/bench")
+def bench():
+    p = BASE_DIR / "bench_results.json"
+    if not p.exists():
+        return {"available": False}
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+        return {"available": True, "summary": data.get("summary", {})}
+    except Exception:
+        return {"available": False}
 
 
 async def run_pipeline_async(**kwargs):

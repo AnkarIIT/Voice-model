@@ -36,25 +36,41 @@ def _ctx_block(chunks: list, budget_chars: int) -> str:
     return "\n\n".join(parts)
 
 
-def build_prompt(query: str, chunks: list) -> str:
+def _history_prompt(history: list) -> str:
+    if not history:
+        return ""
+    lines = ["Conversation so far:"]
+    for turn in history[-6:]:
+        role = turn.get("role", "user")
+        text = turn.get("text", "")
+        if role == "user":
+            lines.append(f"User: {text}")
+        else:
+            lines.append(f"Assistant: {text}")
+    lines.append("\nNow answer the user's latest question using the context below.\n")
+    return "\n".join(lines)
+
+
+def build_prompt(query: str, chunks: list, conversation_history: list | None = None) -> str:
     ctx = _ctx_block(chunks, PROMPT_BUDGET_CHARS)
+    hist = _history_prompt(conversation_history or [])
     return (
-        f"Question: {query}\n"
+        f"{hist}Question: {query}\n"
         f"Context:\n{ctx}\n\n"
         f"Instruction: {SYS_PROMPT}\nAnswer:"
     )
 
 
-def generate_answer(query: str, chunks: list, max_tokens: int = 256):
+def generate_answer(query: str, chunks: list, max_tokens: int = 256, conversation_history: list | None = None):
     t0 = time.perf_counter()
-    prompt = build_prompt(query, chunks)
+    prompt = build_prompt(query, chunks, conversation_history=conversation_history)
 
     gem_key = os.getenv("GEMINI_API_KEY", "").strip()
     open_key = os.getenv("OPENAI_API_KEY", "").strip()
     model = os.getenv("LLM_MODEL", "gemini-3.6-flash")
 
     if gem_key:
-        text = _try_gemini(query, chunks, gem_key, model, max_tokens)
+        text = _try_gemini(query, chunks, gem_key, model, max_tokens, conversation_history=conversation_history)
         if text:
             return text, (time.perf_counter() - t0) * 1000, f"gemini:{model}"
     if open_key:
@@ -72,28 +88,28 @@ def generate_answer(query: str, chunks: list, max_tokens: int = 256):
     return _extractive_fallback(query, chunks), (time.perf_counter() - t0) * 1000, "extractive-fallback"
 
 
-def generate_answer_stream(query: str, chunks: list, max_tokens: int = 256):
+def generate_answer_stream(query: str, chunks: list, max_tokens: int = 256, conversation_history: list | None = None):
     gem_key = os.getenv("GEMINI_API_KEY", "").strip()
     open_key = os.getenv("OPENAI_API_KEY", "").strip()
     model = os.getenv("LLM_MODEL", "gemini-3.6-flash")
 
     if gem_key:
-        yield from _stream_gemini(query, chunks, gem_key, model, max_tokens)
+        yield from _stream_gemini(query, chunks, gem_key, model, max_tokens, conversation_history=conversation_history)
         return
     if open_key:
         openai_model = model if "gpt" in model else "gpt-4o-mini"
-        yield from _stream_openai(build_prompt(query, chunks), open_key, openai_model, max_tokens)
+        yield from _stream_openai(build_prompt(query, chunks, conversation_history=conversation_history), open_key, openai_model, max_tokens)
         return
     if os.getenv("USE_LOCAL_LLM", "0").strip().lower() in {"1", "true", "yes"}:
         local_model = model if "flan" in model else os.getenv("LOCAL_LLM_MODEL", "google/flan-t5-base")
-        text = _try_local(build_prompt(query, chunks), local_model, max_tokens)
+        text = _try_local(build_prompt(query, chunks, conversation_history=conversation_history), local_model, max_tokens)
         if text:
             yield text
             return
     yield _extractive_fallback(query, chunks)
 
 
-def _try_gemini(query, chunks, key, model, max_tokens):
+def _try_gemini(query, chunks, key, model, max_tokens, conversation_history=None):
     global _GENAI_CLIENT
     try:
         from google import genai
@@ -103,7 +119,7 @@ def _try_gemini(query, chunks, key, model, max_tokens):
             _GENAI_CLIENT = genai.Client(api_key=key)
         r = _GENAI_CLIENT.models.generate_content(
             model=model,
-            contents=_gemini_contents(query, chunks),
+            contents=_gemini_contents(query, chunks, conversation_history=conversation_history),
             config=types.GenerateContentConfig(
                 system_instruction=SYS_PROMPT,
                 max_output_tokens=max_tokens,
@@ -119,7 +135,7 @@ def _try_gemini(query, chunks, key, model, max_tokens):
     return None
 
 
-def _stream_gemini(query, chunks, key, model, max_tokens):
+def _stream_gemini(query, chunks, key, model, max_tokens, conversation_history=None):
     global _GENAI_CLIENT
     try:
         from google import genai
@@ -129,7 +145,7 @@ def _stream_gemini(query, chunks, key, model, max_tokens):
             _GENAI_CLIENT = genai.Client(api_key=key)
         stream = _GENAI_CLIENT.models.generate_content_stream(
             model=model,
-            contents=_gemini_contents(query, chunks),
+            contents=_gemini_contents(query, chunks, conversation_history=conversation_history),
             config=types.GenerateContentConfig(
                 system_instruction=SYS_PROMPT,
                 max_output_tokens=max_tokens,
@@ -145,9 +161,10 @@ def _stream_gemini(query, chunks, key, model, max_tokens):
         yield _extractive_fallback(query, chunks)
 
 
-def _gemini_contents(query: str, chunks: list) -> str:
+def _gemini_contents(query: str, chunks: list, conversation_history: list | None = None) -> str:
     ctx = _ctx_block(chunks, PROMPT_BUDGET_CHARS)
-    return f"Question: {query}\n\nContext:\n{ctx}"
+    hist = _history_prompt(conversation_history or [])
+    return f"{hist}Question: {query}\n\nContext:\n{ctx}"
 
 
 def _try_openai(prompt, key, model, max_tokens):

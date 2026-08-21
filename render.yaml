@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: ragoinga
+    runtime: docker
+    plan: starter
+    branch: main
+    rootDir: .
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: SARVAM_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: gemini-3.5-flash-lite
+      - key: STT_PROVIDER
+        value: sarvam
+      - key: WHISPER_DEVICE
+        value: cpu
+      - key: RERANK_DEVICE
+        value: cpu
+      - key: PYTHONUNBUFFERED
+        value: "1"
+    healthCheckPath: /health
+    autoDeploy: true

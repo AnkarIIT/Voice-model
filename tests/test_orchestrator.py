@@ -58,6 +58,22 @@ def test_pipeline_greeting_bypass():
     assert "RAGinGOA" in out["answer"]
 
 
+def test_pipeline_greeting_hindi_gets_devanagari_reply():
+    idx = FakeIndex(_chunks())
+    for _ in range(3):
+        out = run_pipeline(query_text="नमस्ते", index=idx, k=2)
+        assert "RAGinGOA" in out["answer"]
+        assert any("\u0900" <= ch <= "\u097F" for ch in out["answer"]), out["answer"]
+
+
+def test_pipeline_greeting_bengali_gets_bengali_reply():
+    idx = FakeIndex(_chunks())
+    for _ in range(3):
+        out = run_pipeline(query_text="নমস্কার", index=idx, k=2)
+        assert "RAGinGOA" in out["answer"]
+        assert any("\u0980" <= ch <= "\u09FF" for ch in out["answer"]), out["answer"]
+
+
 def test_pipeline_dedupes_duplicate_chunks():
     dup = {
         "text": "The capital of India is New Delhi. It hosts the parliament building.",

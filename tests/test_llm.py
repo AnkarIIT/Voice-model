@@ -15,6 +15,24 @@ def test_prompt_truncates_context_not_instruction():
     assert len(p) <= 3600 + len(SYS_PROMPT) + 250
 
 
+def test_prompt_includes_conversation_history():
+    hist = [
+        {"role": "user", "text": "what is binary search?"},
+        {"role": "assistant", "text": "Binary search runs in O(log n)."},
+    ]
+    p = build_prompt("tell me more", [{"text": "ctx here", "score": 0.8}], conversation_history=hist)
+    assert "Conversation so far:" in p
+    assert "what is binary search?" in p
+    assert "Binary search runs in O(log n)." in p
+    assert "Question: tell me more" in p
+    assert p.endswith(f"Instruction: {SYS_PROMPT}\nAnswer:")
+
+
+def test_prompt_without_history_has_no_history_block():
+    p = build_prompt("q", [{"text": "c", "score": 0.5}])
+    assert "Conversation so far:" not in p
+
+
 def test_extractive_fallback_picks_relevant_sentence():
     chunks = [
         {

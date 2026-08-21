@@ -32,6 +32,14 @@ def test_no_false_positive_on_skill():
     assert screen_text("how to install pillow library")["action"] == "allow"
 
 
+def test_multilingual_greetings_recognized():
+    from app.guardrails import GREETING_RE
+
+    for g in ("hi", "namaste", "नमस्ते", "नमस्कार", "নমস্কার", "হ্যালো", "আদাব"):
+        assert GREETING_RE.search(g), g
+    assert not GREETING_RE.search("what is binary search")
+
+
 def test_guardrails_abstain_low_score():
     retrieved = [{"text": "some text", "score": 0.1}]
     out = check_guardrails("valid query about topic", retrieved, threshold=0.35)

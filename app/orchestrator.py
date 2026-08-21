@@ -19,6 +19,7 @@ def run_pipeline(
     k: int = 5,
     use_rerank: bool = False,
     stt_provider: str = "sarvam",
+    conversation_history: list | None = None,
 ) -> dict:
     timings = {}
     t0 = time.perf_counter()
@@ -70,7 +71,14 @@ def run_pipeline(
         import random
         q = (query_text or "").strip()
         is_hindi = any("\u0900" <= ch <= "\u097F" for ch in q)
-        if is_hindi:
+        is_bengali = any("\u0980" <= ch <= "\u09FF" for ch in q)
+        if is_bengali:
+            ans = random.choice([
+                "নমস্কার! আমি RAGinGOA। হিন্দি, English বা Bengali — যেকোনো ভাষায় প্রশ্ন করুন।",
+                "হ্যালো! আমি RAGinGOA। আজ আপনাকে কীভাবে সাহায্য করতে পারি?",
+                "আদাব! আমি RAGinGOA — knowledge base থেকে যেকোনো প্রশ্নের উত্তর দিতে প্রস্তুত।",
+            ])
+        elif is_hindi:
             ans = random.choice([
                 "नमस्ते! मैं RAGinGOA हूँ। हिंदी, English या Bengali में कुछ भी पूछें।",
                 "नमस्कार! मैं RAGinGOA हूँ। आज मैं आपकी क्या मदद कर सकता हूँ?",
@@ -99,7 +107,7 @@ def run_pipeline(
             "provider": "greeting",
         }
 
-    ans, llm_ms, prov = generate_answer(query_text, chunks)
+    ans, llm_ms, prov = generate_answer(query_text, chunks, conversation_history=conversation_history)
     timings["llm_ms"] = round(llm_ms, 2)
     h = hallucination_check(ans, chunks, encoder=getattr(index, "model", None))
     if h["grounded"]:

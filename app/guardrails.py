@@ -17,7 +17,9 @@ UNSAFE_RE = re.compile(
 )
 
 GREETING_RE = re.compile(
-    r"^(?:hi|hello|hey|namaste|namaskar|good\s*(?:morning|afternoon|evening)|howdy|greetings|hola|hiya|yo|नमस्ते|नमस्कार|प्रणाम|सुप्रभात|शुभकामनाएं|सत्य)[\s!,.]*$",
+    r"^(?:hi|hello|hey|namaste|namaskar|good\s*(?:morning|afternoon|evening)|howdy|greetings|hola|hiya|yo"
+    r"|नमस्ते|नमस्कार|प्रणाम|सुप्रभात|शुभकामनाएं|सत्य"
+    r"|নমস্কার|হ্যালো|আদাব|প্ণাম)[\s!,.]*$",
     re.IGNORECASE,
 )
 

@@ -1,0 +1,19 @@
+# Runtime deps only (no polars/pyarrow/pytest — those are for local dev/index building).
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+python-dotenv>=1.0.0
+requests>=2.31.0
+numpy>=1.26.0
+
+torch>=2.2.0
+sentence-transformers>=3.0.0
+faiss-cpu>=1.7.4
+transformers>=4.44.0
+
+sarvamai>=0.1.30
+gTTS>=2.5.0
+faster-whisper>=1.0.0
+
+google-genai>=1.0.0
+openai>=1.40.0
