@@ -51,9 +51,9 @@ def generate_answer(query: str, chunks: list, max_tokens: int = 256):
     model = os.getenv("LLM_MODEL", "gemini-3.6-flash")
 
     if gem_key:
-        text, label = _try_gemini(prompt, gem_key, model, max_tokens)
+        text = _try_gemini(query, chunks, gem_key, model, max_tokens)
         if text:
-            return text, (time.perf_counter() - t0) * 1000, label
+            return text, (time.perf_counter() - t0) * 1000, f"gemini:{model}"
     if open_key:
         openai_model = model if "gpt" in model else "gpt-4o-mini"
         text = _try_openai(prompt, open_key, openai_model, max_tokens)
@@ -69,25 +69,35 @@ def generate_answer(query: str, chunks: list, max_tokens: int = 256):
     return _extractive_fallback(query, chunks), (time.perf_counter() - t0) * 1000, "extractive-fallback"
 
 
-def _try_gemini(prompt, key, model, max_tokens):
+def _try_gemini(query, chunks, key, model, max_tokens):
     global _GENAI_CLIENT
     try:
         from google import genai
+        from google.genai import types
 
         if _GENAI_CLIENT is None:
             _GENAI_CLIENT = genai.Client(api_key=key)
         r = _GENAI_CLIENT.models.generate_content(
             model=model,
-            contents=prompt,
-            config={"max_output_tokens": max_tokens, "temperature": 0.2},
+            contents=_gemini_contents(query, chunks),
+            config=types.GenerateContentConfig(
+                system_instruction=SYS_PROMPT,
+                max_output_tokens=max_tokens,
+                temperature=0.2,
+            ),
         )
         text = (r.text or "").strip()
         if text:
-            return text, f"gemini:{model}"
+            return text
         logger.warning("gemini returned empty response")
     except Exception as e:
         logger.warning("gemini failed: %s", e)
-    return None, None
+    return None
+
+
+def _gemini_contents(query: str, chunks: list) -> str:
+    ctx = _ctx_block(chunks, PROMPT_BUDGET_CHARS)
+    return f"Question: {query}\n\nContext:\n{ctx}"
 
 
 def _try_openai(prompt, key, model, max_tokens):
