@@ -40,6 +40,19 @@ def test_multilingual_greetings_recognized():
     assert not GREETING_RE.search("what is binary search")
 
 
+def test_follow_up_with_history_bypasses_score_abstain():
+    weak = [{"text": "unrelated filler", "score": 0.05}]
+    g = check_guardrails("explain it more simply", weak, has_history=True)
+    assert g["action"] == "allow"
+    assert g["reason"] in ("follow_up_low_confidence", "follow_up_from_history")
+
+
+def test_no_history_still_abstains_on_weak_scores():
+    weak = [{"text": "unrelated filler", "score": 0.05}]
+    g = check_guardrails("explain it more simply", weak)
+    assert g["action"] == "abstain"
+
+
 def test_guardrails_abstain_low_score():
     retrieved = [{"text": "some text", "score": 0.1}]
     out = check_guardrails("valid query about topic", retrieved, threshold=0.35)

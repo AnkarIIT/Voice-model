@@ -347,6 +347,13 @@ h2.display{font-family:var(--display);font-weight:400;font-size:clamp(32px,4.4vw
 .mp-cell .v em{font-style:normal;color:var(--yellow)}
 .mp-cell .l{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1.6px;color:rgba(255,247,232,.72);margin-top:3px}
 
+.bench-strip{border-top:2px solid var(--yellow);background:rgba(245,213,71,.08)}
+.bench-strip .bs-head{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1.8px;color:var(--yellow);padding:11px 20px 0}
+.bench-strip .bs-row{display:flex;align-items:baseline;gap:16px;padding:7px 20px 14px;flex-wrap:wrap}
+.bench-strip .bs-item{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1.2px;color:rgba(255,247,232,.85)}
+.bench-strip .bs-item b{font-family:var(--display);font-size:21px;color:#fff;margin-right:5px;letter-spacing:.5px}
+.bench-strip .bs-note{font-family:var(--mono);font-size:9px;color:rgba(255,247,232,.55);letter-spacing:.4px}
+
 .arch{padding:88px 0;background:var(--off);border-top:2px solid var(--ink);border-bottom:2px solid var(--ink)}
 .arch-flow{display:flex;align-items:stretch;gap:0;margin-top:10px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:8px}
 .arch-node{
@@ -703,6 +710,15 @@ footer{background:var(--cream);padding:46px 0 0}
           <div class="mp-cell"><div class="v">99<em>%+</em></div><div class="l">SAFETY SCORE</div></div>
           <div class="mp-cell"><div class="v">24/7</div><div class="l">UPTIME</div></div>
         </div>
+        <div class="bench-strip" id="benchStrip" style="display:none">
+          <div class="bs-head">BENCHMARK SNAPSHOT · 50 REAL QUERIES</div>
+          <div class="bs-row">
+            <span class="bs-item"><b id="bP50">—</b> P50</span>
+            <span class="bs-item"><b id="bP70">—</b> P70</span>
+            <span class="bs-item"><b id="bP100">—</b> P100</span>
+            <span class="bs-note">retrieve + rerank + LLM (gemini flash-lite)</span>
+          </div>
+        </div>
       </aside>
     </div>
   </div>
@@ -840,6 +856,21 @@ async function checkHealth(){
 }
 checkHealth();
 
+(async function loadBench(){
+  try {
+    const r = await fetch('/bench');
+    if (!r.ok) return;
+    const j = await r.json();
+    if (!j.available) return;
+    const s = (j.summary && (j.summary.retrieval_llm_ms || j.summary.total_ms)) || null;
+    if (!s) return;
+    $('bP50').textContent = Math.round(s.p50) + 'ms';
+    $('bP70').textContent = Math.round(s.p70) + 'ms';
+    $('bP100').textContent = Math.round(s.p100) + 'ms';
+    $('benchStrip').style.display = 'block';
+  } catch {}
+})();
+
 (async function heroLoop(){
   const q = '"What is the leave policy?"';
   while (true){
@@ -909,60 +940,58 @@ $('demoForm').addEventListener('submit', async e => {
     si++;
   }, 550);
 
+  let final = null;
   try {
     const fd = new FormData();
     fd.append('query', q);
     fd.append('k', '4');
     fd.append('rerank', 'true');
-    const r = await fetch('/query', { method:'POST', body:fd });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const j = await r.json();
+    fd.append('session_id', lcSession());
+    const r = await fetch('/query-stream', { method:'POST', body:fd });
+    if (!r.ok || !r.body) throw new Error('HTTP ' + r.status);
 
-    clearInterval(adv);
-    stages.innerHTML = '';
-    const act0 = j.guardrail && j.guardrail.action;
-    const halted = act0 === 'block' || act0 === 'abstain' || act0 === 'reject';
-    const isVoice = j.timings && j.timings.stt_ms > 0;
-    if (isVoice) stages.appendChild(lcStageDone(`TRANSCRIBED VIA ${j.stt.provider_used}`));
-    stages.appendChild(lcStageDone(`EMBEDDED · ${(j.retrieved||[]).length} CANDIDATES`));
-    if (halted){
-      stages.appendChild(lcStageDone(`HALTED · ${(act0||'').toUpperCase()} GUARDRAIL`));
-    } else {
-      stages.appendChild(lcStageDone(act0 === 'flag' ? 'GROUNDING FLAGGED ⚠' : 'GROUNDING PASSED'));
-      stages.appendChild(lcStageDone(`ANSWER GENERATED · ${j.provider || 'LLM'}`));
+    // live answer block fills up as tokens stream in
+    const ansEl = $('lcAnswer');
+    $('lcAnsBlock').style.display = 'block';
+    ansEl.className = 'lc-answer';
+    ansEl.textContent = '';
+    $('lcProv').textContent = 'generating…';
+
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    const handleFrame = frame => {
+      let ev = 'message', data = '';
+      for (const line of frame.split('\n')){
+        if (line.startsWith('event:')) ev = line.slice(6).trim();
+        else if (line.startsWith('data:')) data += line.slice(5).trim();
+      }
+      if (!data) return;
+      let j; try { j = JSON.parse(data); } catch { return; }
+      if (ev === 'token'){
+        ansEl.textContent += j.text;
+        if (si < 3){ clearInterval(adv); si = 3; stages.children[0].innerHTML = `<span class="done">✓ ${NAMES[0]}</span>`; stages.children[1].innerHTML = `<span class="done">✓ ${NAMES[1]}</span>`; stages.children[2].innerHTML = `<span class="done">✓ ${NAMES[2]}</span>`; stages.children[3].innerHTML = `&gt; ${NAMES[3]}<span style="animation:blink .8s steps(1) infinite">▌</span>`; }
+      } else if (ev === 'error'){
+        throw new Error(j.error || 'stream error');
+      } else if (ev === 'done'){
+        final = j;
+      }
+    };
+    while (true){
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream:true });
+      let i;
+      while ((i = buf.indexOf('\n\n')) >= 0){
+        handleFrame(buf.slice(0, i));
+        buf = buf.slice(i + 2);
+      }
     }
 
-    const srcs = $('lcSrcs');
-    srcs.innerHTML = '';
-    (j.retrieved || []).forEach((c,i) => {
-      const pct = Math.max(0, Math.min(100, Math.round((c.score||0)*100)));
-      const row = document.createElement('div');
-      row.className = 'lc-src';
-      row.innerHTML =
-        `<span class="n">${String(i+1).padStart(2,'0')}</span>` +
-        `<div><div class="d">${esc(c.doc_id||'doc')}</div><div class="strat">${esc(c.strategy||'chunk')}</div></div>` +
-        `<div class="lc-bar"><i style="width:${pct}%"></i></div>`;
-      srcs.appendChild(row);
-    });
-    $('lcSrcBlock').style.display = srcs.children.length ? 'block' : 'none';
-
-    const ansEl = $('lcAnswer');
-    const act = j.guardrail && j.guardrail.action;
-    ansEl.textContent = j.answer == null ? '(no answer produced)' : j.answer;
-    ansEl.className = 'lc-answer' + ((act && act !== 'allow' && act !== 'flag') || !j.answer ? ' muted' : '');
-
-    const meta = $('lcMeta');
-    meta.innerHTML = '';
-    const h = j.hallucination || {};
-    let conf = '—';
-    if (typeof h.embed_sim === 'number') conf = Math.round(h.embed_sim*100)+'%';
-    else if (typeof h.hit_rate === 'number') conf = Math.round(h.hit_rate*100)+'%';
-    addPill(meta, act === 'block' ? ['w','BLOCKED'] : act === 'abstain' ? ['w','ABSTAINED'] :
-      act === 'reject' ? ['w','REJECTED'] : act === 'flag' ? ['w','UNGROUNDED ⚠'] : ['g','GROUNDED ✓']);
-    addPill(meta, ['', 'CONFIDENCE ' + conf]);
-    addPill(meta, ['', '⏱ ' + ((j.timings && j.timings.total_ms) || '?') + 'ms']);
-    $('lcProv').textContent = 'via ' + (j.provider || 'llm');
-    $('lcAnsBlock').style.display = 'block';
+    clearInterval(adv);
+    if (!final) throw new Error('empty stream');
+    lcRender(final);
+    speakAnswer(final);
   } catch (err) {
     clearInterval(adv);
     $('lcErr').style.display = 'block';
@@ -971,6 +1000,71 @@ $('demoForm').addEventListener('submit', async e => {
     btn.disabled = false; btn.textContent = 'RUN →';
   }
 });
+
+function lcSession(){
+  let sid = sessionStorage.getItem('rag_session');
+  if (!sid){ sid = 's-' + Math.random().toString(36).slice(2,10); sessionStorage.setItem('rag_session', sid); }
+  return sid;
+}
+
+async function speakAnswer(j){
+  try {
+    const act = j.guardrail && j.guardrail.action;
+    if (!j.answer || (act && act !== 'allow' && act !== 'flag')) return;
+    const fd = new FormData();
+    fd.append('text', String(j.answer).slice(0,900));
+    const rs = await fetch('/speak', { method:'POST', body:fd });
+    if (!rs.ok) return;
+    new Audio(URL.createObjectURL(await rs.blob())).play().catch(()=>{});
+  } catch {}
+}
+
+function lcRender(j){
+  const stages = $('lcStages');
+  const NAMES = ['EMBEDDING QUERY','RETRIEVING CONTEXT','VERIFYING GROUNDING','GENERATING ANSWER'];
+  stages.innerHTML = '';
+  const act0 = j.guardrail && j.guardrail.action;
+  const halted = act0 === 'block' || act0 === 'abstain' || act0 === 'reject';
+  stages.appendChild(lcStageDone(`EMBEDDED · ${(j.retrieved||[]).length} CANDIDATES`));
+  if (halted){
+    stages.appendChild(lcStageDone(`HALTED · ${(act0||'').toUpperCase()} GUARDRAIL`));
+  } else {
+    stages.appendChild(lcStageDone(act0 === 'flag' ? 'GROUNDING FLAGGED ⚠' : 'GROUNDING PASSED'));
+    stages.appendChild(lcStageDone(`ANSWER GENERATED · ${j.provider || 'LLM'}`));
+  }
+
+  const srcs = $('lcSrcs');
+  srcs.innerHTML = '';
+  (j.retrieved || []).forEach((c,i) => {
+    const pct = Math.max(0, Math.min(100, Math.round((c.score||0)*100)));
+    const row = document.createElement('div');
+    row.className = 'lc-src';
+    row.innerHTML =
+      `<span class="n">${String(i+1).padStart(2,'0')}</span>` +
+      `<div><div class="d">${esc(c.doc_id||'doc')}</div><div class="strat">${esc(c.strategy||'chunk')}</div></div>` +
+      `<div class="lc-bar"><i style="width:${pct}%"></i></div>`;
+    srcs.appendChild(row);
+  });
+  $('lcSrcBlock').style.display = srcs.children.length ? 'block' : 'none';
+
+  const ansEl = $('lcAnswer');
+  const act = j.guardrail && j.guardrail.action;
+  ansEl.textContent = j.answer == null ? '(no answer produced)' : j.answer;
+  ansEl.className = 'lc-answer' + ((act && act !== 'allow' && act !== 'flag') || !j.answer ? ' muted' : '');
+
+  const meta = $('lcMeta');
+  meta.innerHTML = '';
+  const h = j.hallucination || {};
+  let conf = '—';
+  if (typeof h.embed_sim === 'number') conf = Math.round(h.embed_sim*100)+'%';
+  else if (typeof h.hit_rate === 'number') conf = Math.round(h.hit_rate*100)+'%';
+  addPill(meta, act === 'block' ? ['w','BLOCKED'] : act === 'abstain' ? ['w','ABSTAINED'] :
+    act === 'reject' ? ['w','REJECTED'] : act === 'flag' ? ['w','UNGROUNDED ⚠'] : ['g','GROUNDED ✓']);
+  addPill(meta, ['', 'CONFIDENCE ' + conf]);
+  addPill(meta, ['', '⏱ ' + ((j.timings && j.timings.total_ms) || '?') + 'ms']);
+  $('lcProv').textContent = 'via ' + (j.provider || 'llm') + (typeof h.embed_sim === 'number' ? ' · cross-script verify' : '');
+  $('lcAnsBlock').style.display = 'block';
+}
 
 function lcStageDone(txt){
   const div = document.createElement('div');

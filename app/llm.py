@@ -9,7 +9,11 @@ SYS_PROMPT = (
     "The context may be in Hindi or Bengali while the question is in English, "
     "or the other way around: translate facts faithfully and reply in the "
     "language of the question. "
-    "If the context lacks the answer, say 'No reliable answer found in context.'"
+    "If a 'Conversation so far' section is present, follow-up requests like "
+    "'explain more simply' refer to your previous answer: restate or simplify "
+    "it faithfully without inventing new facts. "
+    "If neither the context nor prior conversation answers the question, say "
+    "'No reliable answer found in context.'"
 )
 PROMPT_BUDGET_CHARS = 3600
 REQUEST_TIMEOUT_S = 30
@@ -47,7 +51,12 @@ def _history_prompt(history: list) -> str:
             lines.append(f"User: {text}")
         else:
             lines.append(f"Assistant: {text}")
-    lines.append("\nNow answer the user's latest question using the context below.\n")
+    lines.append(
+        "\nThe user's latest question may be a FOLLOW-UP to this conversation "
+        "(e.g. 'explain more', 'why?', 'simplify it'). In that case answer using "
+        "the conversation above and/or the context below — do not refuse when the "
+        "conversation already contains the needed information.\n"
+    )
     return "\n".join(lines)
 
 

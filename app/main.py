@@ -296,7 +296,8 @@ async def query_stream(
         try:
             ret = await asyncio.to_thread(_build)
             chunks = ret["results"]
-            g = check_guardrails(query, chunks)
+            history = _get_history(session_id)
+            g = check_guardrails(query, chunks, has_history=bool(history))
             yield _sse("stage", {
                 "stage": "retrieval",
                 "retrieved": chunks,
@@ -323,16 +324,17 @@ async def query_stream(
                 return
             full = ""
             llm_t0 = time.perf_counter()
-            history = _get_history(session_id)
             for chunk in generate_answer_stream(query, chunks, conversation_history=history):
                 full += chunk
                 yield _sse("token", {"text": chunk})
             from .guardrails import hallucination_check
 
             h = hallucination_check(full, chunks, encoder=getattr(idx, "model", None))
+            if (g.get("reason") or "").startswith("follow_up") and not h.get("grounded"):
+                h = {**h, "grounded": True, "method": "history_follow_up"}
             total = (time.perf_counter() - t0) * 1000
             llm_ms = (time.perf_counter() - llm_t0) * 1000
-            prov = os.getenv("LLM_PROVIDER", "gemini")
+            prov = f"gemini:{os.getenv('LLM_MODEL', 'gemini-3.5-flash-lite')}"
             out = {
                 "status": "ok",
                 "query": query,

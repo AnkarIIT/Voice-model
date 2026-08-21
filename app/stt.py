@@ -1,4 +1,6 @@
 import logging
+import shutil
+import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -9,6 +11,30 @@ import requests
 logger = logging.getLogger(__name__)
 
 REQUEST_TIMEOUT_S = 30
+
+
+def to_16k_mono(src: Path) -> Path:
+    """Transcode audio to 16kHz mono WAV via ffmpeg (best-effort).
+
+    Browser recordings are often webm/opus at 48kHz stereo, which hurts
+    whisper accuracy. Returns the original path if ffmpeg is unavailable.
+    """
+    ff = shutil.which("ffmpeg")
+    if not ff:
+        return src
+    dst = src.with_suffix(".16k.wav")
+    try:
+        r = subprocess.run(
+            [ff, "-y", "-loglevel", "error", "-i", str(src), "-ac", "1", "-ar", "16000", str(dst)],
+            capture_output=True,
+            timeout=60,
+        )
+        if r.returncode == 0 and dst.exists():
+            return dst
+        logger.warning("ffmpeg transcode failed (%s); using original file", r.stderr.decode(errors="replace")[:200])
+    except Exception as e:
+        logger.warning("ffmpeg transcode error (%s); using original file", e)
+    return src
 
 
 class STTError(RuntimeError):
@@ -185,22 +211,30 @@ class LocalWhisperSTT:
     def transcribe(self, audio_path: Path, language_code: str = "hi") -> STTResult:
         self._load()
         t0 = time.perf_counter()
-        lang = self._lang(language_code)
-        if self.backend == "faster-whisper":
-            segments, info = self._model.transcribe(
-                str(audio_path),
-                language=lang,
-                beam_size=5,
-                vad_filter=True,
-                vad_parameters={"min_silence_duration_ms": 300},
-                condition_on_previous_text=False,
-            )
-            text = " ".join(s.text for s in segments).strip()
-            detected = info.language
-        else:
-            result = self._model.transcribe(str(audio_path), language=lang)
-            text = result["text"].strip()
-            detected = result.get("language", lang)
+        processed = to_16k_mono(audio_path)
+        try:
+            lang = self._lang(language_code)
+            if self.backend == "faster-whisper":
+                segments, info = self._model.transcribe(
+                    str(processed),
+                    language=lang,
+                    beam_size=5,
+                    vad_filter=True,
+                    vad_parameters={"min_silence_duration_ms": 300},
+                    condition_on_previous_text=False,
+                )
+                text = " ".join(s.text for s in segments).strip()
+                detected = info.language
+            else:
+                result = self._model.transcribe(str(processed), language=lang)
+                text = result["text"].strip()
+                detected = result.get("language", lang)
+        finally:
+            if processed != audio_path:
+                try:
+                    processed.unlink(missing_ok=True)
+                except OSError:
+                    pass
         return STTResult(
             text=text,
             language=detected,

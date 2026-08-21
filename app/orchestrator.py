@@ -49,7 +49,7 @@ def run_pipeline(
     timings["search_ms"] = ret["search_ms"]
     chunks = ret["results"]
 
-    g = check_guardrails(query_text, chunks)
+    g = check_guardrails(query_text, chunks, has_history=bool(conversation_history))
     if g["action"] != "allow":
         total = (time.perf_counter() - t0) * 1000
         timings["llm_ms"] = 0
@@ -110,8 +110,11 @@ def run_pipeline(
     ans, llm_ms, prov = generate_answer(query_text, chunks, conversation_history=conversation_history)
     timings["llm_ms"] = round(llm_ms, 2)
     h = hallucination_check(ans, chunks, encoder=getattr(index, "model", None))
-    if h["grounded"]:
+    is_follow_up = (g.get("reason") or "").startswith("follow_up")
+    if h["grounded"] or is_follow_up:
         guardrail = g
+        if is_follow_up and not h.get("grounded"):
+            h = {**h, "grounded": True, "method": "history_follow_up"}
     else:
         logger.info("answer flagged ungrounded (hit_rate=%s)", h.get("hit_rate"))
         guardrail = {"action": "flag", "reason": "ungrounded", "answer": ans}

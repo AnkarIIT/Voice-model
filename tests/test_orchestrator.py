@@ -85,3 +85,15 @@ def test_pipeline_dedupes_duplicate_chunks():
     idx = FakeIndex(chunks)
     out = run_pipeline(query_text="what is the capital of India", index=idx, k=3)
     assert len(out["retrieved"]) < 3
+
+
+def test_pipeline_vague_follow_up_with_history_not_abstained():
+    weak = [{"text": "monsoon agriculture unrelated filler text here", "score": 0.05}]
+    idx = FakeIndex(weak)
+    hist = [
+        {"role": "user", "text": "what is binary search?"},
+        {"role": "assistant", "text": "Binary search finds items in sorted arrays in O(log n)."},
+    ]
+    out = run_pipeline(query_text="explain it more simply", index=idx, k=1, conversation_history=hist)
+    assert out["status"] == "ok"
+    assert out["guardrail"]["action"] == "allow"

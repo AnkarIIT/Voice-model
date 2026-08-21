@@ -36,8 +36,28 @@ HINDI_GREETING_ANSWERS = [
 ]
 
 
-def screen_text(text: str) -> dict:
-    t = (text or "").strip()
+def answer_draws_on_history(answer: str, history: list, min_ratio: float = 0.45) -> bool:
+    """True when the answer largely restates a previous assistant turn.
+
+    Used to avoid flagging legit follow-up answers ('explain more simply')
+    as ungrounded just because they don't quote the retrieved chunks.
+    """
+    if not history or not answer:
+        return False
+    ans_toks = {t for t in re.findall(r"[\w\u0900-\u097F\u0980-\u09FF]+", answer.lower()) if len(t) > 2}
+    if not ans_toks:
+        return False
+    hist_text = " ".join(
+        t.get("text", "") for t in history if t.get("role") == "assistant"
+    ).lower()
+    hist_toks = set(re.findall(r"[\w\u0900-\u097F\u0980-\u09FF]+", hist_text))
+    if not hist_toks:
+        return False
+    overlap = len(ans_toks & hist_toks) / len(ans_toks)
+    return overlap >= min_ratio
+
+
+def screen_text(text: str) -> dict:    t = (text or "").strip()
     if len(t) < 2:
         return {"action": "reject", "reason": "too_short_or_empty"}
     if UNSAFE_RE.search(t):
@@ -45,7 +65,7 @@ def screen_text(text: str) -> dict:
     return {"action": "allow", "reason": "ok"}
 
 
-def check_guardrails(query: str, retrieved: list, threshold: float = None) -> dict:
+def check_guardrails(query: str, retrieved: list, threshold: float = None, has_history: bool = False) -> dict:
     if threshold is None:
         threshold = ABSTAIN_THRESHOLD
     q = (query or "").strip()
@@ -58,14 +78,19 @@ def check_guardrails(query: str, retrieved: list, threshold: float = None) -> di
     if GREETING_RE.search(q):
         return {"action": "allow", "reason": "greeting", "answer": None}
     if not retrieved:
+        if has_history:
+            # Follow-up like "explain more" — the LLM can answer from history.
+            return {"action": "allow", "reason": "follow_up_from_history", "answer": None}
         return {"action": "abstain", "reason": "no_context", "answer": ABSTAIN_ANSWER}
     max_score = max(r.get("score", 0.0) for r in retrieved)
-    if max_score < threshold:
+    if max_score < threshold and not has_history:
         return {
             "action": "abstain",
             "reason": "low_confidence",
             "answer": ABSTAIN_ANSWER + " (low similarity)",
         }
+    if max_score < threshold:
+        return {"action": "allow", "reason": "follow_up_low_confidence", "answer": None}
     return {"action": "allow", "reason": "ok", "answer": None}
 
 
