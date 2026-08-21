@@ -71,7 +71,7 @@ def run_pipeline(
         ans = random.choice([
             "Namaste! I'm RAGinGOA. Ask me anything in Hindi, English, or Bengali.",
             "Hello! I'm RAGinGOA. How can I help you today?",
-            "Hi there! Ready to answer your questions from the knowledge base.",
+            "Hi there! RAGinGOA here — ready to answer your questions from the knowledge base.",
         ])
         total = (time.perf_counter() - t0) * 1000
         timings["llm_ms"] = 0
@@ -92,7 +92,7 @@ def run_pipeline(
 
     ans, llm_ms, prov = generate_answer(query_text, chunks)
     timings["llm_ms"] = round(llm_ms, 2)
-    h = hallucination_check(ans, chunks)
+    h = hallucination_check(ans, chunks, encoder=getattr(index, "model", None))
     if h["grounded"]:
         guardrail = g
     else:

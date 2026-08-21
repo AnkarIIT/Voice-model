@@ -56,3 +56,16 @@ def test_pipeline_greeting_bypass():
     assert out["status"] == "ok"
     assert out["guardrail"]["reason"] == "greeting"
     assert "RAGinGOA" in out["answer"]
+
+
+def test_pipeline_dedupes_duplicate_chunks():
+    dup = {
+        "text": "The capital of India is New Delhi. It hosts the parliament building.",
+        "score": 0.85,
+        "doc_id": "q1_0",
+        "strategy": "metadata_raw",
+    }
+    chunks = [dup, {**dup, "strategy": "fixed512_overlap15", "score": 0.84}, _chunks()[0]]
+    idx = FakeIndex(chunks)
+    out = run_pipeline(query_text="what is the capital of India", index=idx, k=3)
+    assert len(out["retrieved"]) < 3

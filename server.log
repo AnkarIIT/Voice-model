@@ -1,0 +1,10 @@
+INFO:     Started server process [28280]
+INFO:     Waiting for application startup.
+2026-08-22 01:05:36,818 WARNING app.embed: meta.json missing; loading legacy C:\Codes\ai\index_hinval\meta.pkl (pickle)
+2026-08-22 01:05:36,947 WARNING app.embed: CUDA requested but unavailable; using CPU
+2026-08-22 01:05:36,949 INFO    sentence_transformers.SentenceTransformer: Load pretrained SentenceTransformer: paraphrase-multilingual-MiniLM-L12-v2
+2026-08-22 01:05:42,546 INFO    app.embed: loaded index ntotal=49912 gpu=False from C:\Codes\ai\index_hinval
+2026-08-22 01:05:42,546 INFO    app.main: index ready: ntotal=49912
+INFO:     Application startup complete.
+ERROR:    [Errno 10048] error while attempting to bind on address ('0.0.0.0', 8000): [winerror 10048] only one usage of each socket Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|##########| 1/1 [00:00<00:00, 21.13it/s]
+INFO:     127.0.0.1:57511 - "POST /query HTTP/1.1" 200 OK

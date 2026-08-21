@@ -6,7 +6,10 @@ logger = logging.getLogger(__name__)
 
 SYS_PROMPT = (
     "Answer concisely and ONLY using the provided context. "
-    "If context lacks answer, say 'No reliable answer found in context.'"
+    "The context may be in Hindi or Bengali while the question is in English, "
+    "or the other way around: translate facts faithfully and reply in the "
+    "language of the question. "
+    "If the context lacks the answer, say 'No reliable answer found in context.'"
 )
 PROMPT_BUDGET_CHARS = 3600
 REQUEST_TIMEOUT_S = 30
@@ -21,15 +24,15 @@ def _ctx_block(chunks: list, budget_chars: int) -> str:
     for i, c in enumerate(chunks[:5]):
         head = f"[{i + 1}] "
         tail = f" (score:{c.get('score', 0):.2f})"
-        allowance = max(200, budget_chars - used - len(head) - len(tail))
+        sep = 2 if parts else 0
+        allowance = budget_chars - used - len(head) - len(tail) - sep
+        if allowance < 120:
+            break
         body = str(c.get("text", ""))[:allowance].strip()
         if not body:
-            break
-        part = f"{head}{body}{tail}"
-        parts.append(part)
-        used += len(part) + 2
-        if used >= budget_chars:
-            break
+            continue
+        parts.append(f"{head}{body}{tail}")
+        used += len(head) + len(body) + len(tail) + sep
     return "\n\n".join(parts)
 
 

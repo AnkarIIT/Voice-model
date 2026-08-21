@@ -38,6 +38,7 @@ MAX_K = int(os.getenv("MAX_K", "20"))
 DEFAULT_K = int(os.getenv("DEFAULT_K", "5"))
 ABSTAIN_THRESHOLD = float(os.getenv("ABSTAIN_THRESHOLD", "0.35"))
 GROUNDING_HIT_RATE = float(os.getenv("GROUNDING_HIT_RATE", "0.4"))
+GROUNDING_EMBED_SIM = float(os.getenv("GROUNDING_EMBED_SIM", "0.5"))
 
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()

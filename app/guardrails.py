@@ -1,7 +1,7 @@
 import logging
 import re
 
-from .config import ABSTAIN_THRESHOLD, GROUNDING_HIT_RATE
+from .config import ABSTAIN_THRESHOLD, GROUNDING_EMBED_SIM, GROUNDING_HIT_RATE
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,43 @@ def check_guardrails(query: str, retrieved: list, threshold: float = None) -> di
     return {"action": "allow", "reason": "ok", "answer": None}
 
 
-def hallucination_check(answer: str, retrieved: list) -> dict:
+def _dominant_script(text: str) -> str:
+    deva = latin = other = 0
+    for ch in text or "":
+        if "\u0900" <= ch <= "\u097F":
+            deva += 1
+        elif ch.isascii() and ch.isalpha():
+            latin += 1
+        elif ch.isalpha():
+            other += 1
+    best = max(deva, latin, other)
+    if best == 0:
+        return "none"
+    if best == deva:
+        return "devanagari"
+    if best == latin:
+        return "latin"
+    return "other"
+
+
+def _embed_similarity(answer: str, retrieved: list, encoder):
+    if encoder is None:
+        return None
+    try:
+        import numpy as np
+
+        texts = [str(r.get("text", ""))[:1200] for r in retrieved[:8]]
+        embs = encoder.encode(
+            [answer] + texts, normalize_embeddings=True, convert_to_numpy=True
+        )
+        sims = embs[1:] @ embs[0]
+        return float(np.max(sims))
+    except Exception as e:
+        logger.warning("embedding grounding check failed: %s", e)
+        return None
+
+
+def hallucination_check(answer: str, retrieved: list, encoder=None) -> dict:
     result = {"method": "lexical_overlap"}
     if not answer or not retrieved:
         result.update({"grounded": False, "hit_rate": 0.0})
@@ -72,8 +108,29 @@ def hallucination_check(answer: str, retrieved: list) -> dict:
         result.update({"grounded": True, "hit_rate": 1.0})
         return result
     hit = sum(1 for w in ans_terms if w in ctx) / len(ans_terms)
-    result.update({
-        "grounded": hit >= GROUNDING_HIT_RATE,
-        "hit_rate": round(hit, 2),
-    })
+    if hit >= GROUNDING_HIT_RATE:
+        result.update({"grounded": True, "hit_rate": round(hit, 2)})
+        return result
+
+    ans_script = _dominant_script(answer)
+    ctx_script = _dominant_script(ctx)
+    if ans_script != "none" and ctx_script != "none" and ans_script != ctx_script:
+        sim = _embed_similarity(answer, retrieved, encoder)
+        if sim is not None:
+            logger.info("cross-script grounding via embedding sim=%.3f", sim)
+            result.update({
+                "method": "embedding_similarity",
+                "hit_rate": round(hit, 2),
+                "embed_sim": round(sim, 3),
+                "grounded": sim >= GROUNDING_EMBED_SIM,
+            })
+            return result
+        result.update({
+            "method": "cross_lingual_unverified",
+            "hit_rate": round(hit, 2),
+            "grounded": True,
+        })
+        return result
+
+    result.update({"grounded": False, "hit_rate": round(hit, 2)})
     return result

@@ -1,4 +1,15 @@
+import numpy as np
+import pytest
+
 from app.guardrails import check_guardrails, hallucination_check, screen_text
+
+
+class FakeEncoder:
+    def __init__(self, rows):
+        self._rows = np.array(rows, dtype="float32")
+
+    def encode(self, texts, normalize_embeddings=True, convert_to_numpy=True, **kw):
+        return self._rows[: len(texts)]
 
 
 def test_allow_normal_query():
@@ -43,4 +54,34 @@ def test_hallucination_grounded():
 def test_hallucination_ungrounded():
     ctx = [{"text": "Completely unrelated content about agriculture and monsoon."}]
     h = hallucination_check("Quantum computing uses qubits for parallel computation.", ctx)
+    assert h["grounded"] is False
+
+
+def test_hallucination_cross_script_grounded_via_embedding():
+    hi_ctx = [{"text": "द्विआधारी खोज एक क्रमबद्ध सूची में वस्तु ढूंढने की विधि है।", "score": 0.8}]
+    enc = FakeEncoder([[1.0, 0.0], [0.95, 0.31]])
+    h = hallucination_check("A binary search locates an item in a sorted list.", hi_ctx, encoder=enc)
+    assert h["method"] == "embedding_similarity"
+    assert h["grounded"] is True
+    assert h["embed_sim"] >= 0.5
+
+
+def test_hallucination_cross_script_ungrounded_via_embedding():
+    hi_ctx = [{"text": "मानसून की बारिश खेती के लिए महत्वपूर्ण है।", "score": 0.8}]
+    enc = FakeEncoder([[1.0, 0.0], [0.05, 0.99]])
+    h = hallucination_check("A binary search locates an item in a sorted list.", hi_ctx, encoder=enc)
+    assert h["method"] == "embedding_similarity"
+    assert h["grounded"] is False
+
+
+def test_hallucination_cross_script_without_encoder_passes():
+    hi_ctx = [{"text": "द्विआधारी खोज एक क्रमबद्ध सूची में वस्तु ढूंढने की विधि है।", "score": 0.8}]
+    h = hallucination_check("A binary search locates an item in a sorted list.", hi_ctx)
+    assert h["method"] == "cross_lingual_unverified"
+    assert h["grounded"] is True
+
+
+@pytest.mark.parametrize("bad", [None, []])
+def test_hallucination_empty_inputs(bad):
+    h = hallucination_check("some answer text here", bad)
     assert h["grounded"] is False

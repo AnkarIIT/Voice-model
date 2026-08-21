@@ -12,7 +12,7 @@ def test_prompt_truncates_context_not_instruction():
     chunks = [{"text": "x" * 10000, "score": 0.5} for _ in range(5)]
     p = build_prompt("q", chunks)
     assert f"Instruction: {SYS_PROMPT}" in p
-    assert len(p) <= 3600 + 200
+    assert len(p) <= 3600 + len(SYS_PROMPT) + 250
 
 
 def test_extractive_fallback_picks_relevant_sentence():

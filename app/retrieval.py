@@ -1,4 +1,5 @@
 import logging
+import re
 import threading
 import time
 
@@ -9,6 +10,22 @@ logger = logging.getLogger(__name__)
 
 _CE = None
 _CE_LOCK = threading.Lock()
+
+
+def _text_key(r: dict) -> str:
+    return re.sub(r"\s+", "", str(r.get("text", "")))[:160].lower()
+
+
+def dedupe(results: list) -> list:
+    seen = set()
+    out = []
+    for r in sorted(results, key=lambda x: -float(x.get("score", 0.0) or 0.0)):
+        key = _text_key(r)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(r)
+    return out
 
 
 def _get_cross_encoder():
@@ -40,6 +57,8 @@ def rerank(query_text: str, results: list, top_k: int) -> list:
 def retrieve(query_text: str, index, k: int = 5, use_rerank: bool = False) -> dict:
     t0 = time.perf_counter()
     results, search_ms = index.search(query_text, k * 2 if use_rerank else k)
+    if len(results) > 1:
+        results = dedupe(results)
     if use_rerank and len(results) > 1:
         results = rerank(query_text, results, k)
     else:
