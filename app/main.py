@@ -176,6 +176,7 @@ async def voice_query(
     file: UploadFile = File(...),
     language_code: str = Form("hi-IN"),
     k: int = Form(DEFAULT_K),
+    stt_provider: str = Form("sarvam"),
 ):
     idx = get_index()
     if idx is None:
@@ -187,6 +188,7 @@ async def voice_query(
             language_code=language_code,
             index=idx,
             k=_clamp_k(k),
+            stt_provider=stt_provider,
         )
         return JSONResponse(out)
     finally:

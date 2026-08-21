@@ -29,7 +29,7 @@ RERANK_DEVICE = os.getenv("RERANK_DEVICE", WHISPER_DEVICE).strip().lower()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
-LLM_MODEL = os.getenv("LLM_MODEL", "gemini-1.5-flash")
+LLM_MODEL = os.getenv("LLM_MODEL", "gemini-3.6-flash")
 USE_LOCAL_LLM = _bool("USE_LOCAL_LLM")
 LOCAL_LLM_MODEL = os.getenv("LOCAL_LLM_MODEL", "google/flan-t5-base")
 

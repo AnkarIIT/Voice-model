@@ -18,6 +18,7 @@ def run_pipeline(
     index: FaissIndex = None,
     k: int = 5,
     use_rerank: bool = False,
+    stt_provider: str = "sarvam",
 ) -> dict:
     timings = {}
     t0 = time.perf_counter()
@@ -25,7 +26,7 @@ def run_pipeline(
 
     if audio_path is not None:
         s0 = time.perf_counter()
-        stt = transcribe_with_harness(audio_path, language_code, "sarvam")
+        stt = transcribe_with_harness(audio_path, language_code, stt_provider)
         timings["stt_ms"] = round(stt.get("total_ms", 0), 2)
         if stt["status"] != "ok" or not stt["text"]:
             total = (time.perf_counter() - t0) * 1000

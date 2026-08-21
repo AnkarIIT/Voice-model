@@ -1,5 +1,6 @@
-# VoxRAG — Voice-First RAG for Indic Languages
+# RAGinGOA — Voice-First RAG for Indic Languages
 
+**Hackathon:** HH Goa 2026  
 **Phase:** Step 2 — STT Harness + Production Frontend  
 **Stack:** FastAPI · Sarvam STT · FAISS · Sentence Transformers · Gemini/OpenAI LLM  
 **Dataset:** [ai4bharat/MSMARCO-XI](https://huggingface.co/datasets/ai4bharat/MSMARCO-XI) (Hindi + Bengali validation splits)
@@ -8,7 +9,7 @@
 
 ## What it does
 
-VoxRAG lets users **talk to their documents** in Hindi, English, and Bengali. It:
+RAGinGOA lets users **talk to their documents** in Hindi, English, and Bengali. It:
 
 1. **Transcribes** voice input via Sarvam Saarika v2.5 (cloud) or faster-whisper (local fallback)
 2. **Retrieves** relevant chunks from a FAISS index built on MSMARCO-XI passages

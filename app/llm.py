@@ -48,7 +48,7 @@ def generate_answer(query: str, chunks: list, max_tokens: int = 256):
 
     gem_key = os.getenv("GEMINI_API_KEY", "").strip()
     open_key = os.getenv("OPENAI_API_KEY", "").strip()
-    model = os.getenv("LLM_MODEL", "gemini-1.5-flash")
+    model = os.getenv("LLM_MODEL", "gemini-3.6-flash")
 
     if gem_key:
         text, label = _try_gemini(prompt, gem_key, model, max_tokens)

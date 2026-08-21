@@ -187,7 +187,14 @@ class LocalWhisperSTT:
         t0 = time.perf_counter()
         lang = self._lang(language_code)
         if self.backend == "faster-whisper":
-            segments, info = self._model.transcribe(str(audio_path), language=lang, beam_size=5)
+            segments, info = self._model.transcribe(
+                str(audio_path),
+                language=lang,
+                beam_size=5,
+                vad_filter=True,
+                vad_parameters={"min_silence_duration_ms": 300},
+                condition_on_previous_text=False,
+            )
             text = " ".join(s.text for s in segments).strip()
             detected = info.language
         else:
