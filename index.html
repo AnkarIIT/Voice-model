@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice RAG - आपका प्रॉडक्ट वॉइस में बदलें</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #F5F5F7;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .glass-dark {
+            background: rgba(29, 29, 31, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+        }
+        .border-glow {
+            border: 2px solid;
+            border-image: linear-gradient(45deg, #6366F1, #8B5CF6) 1;
+        }
+    </style>
+</head>
+<body class="text-gray-900">
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 gradient-bg rounded-full flex items-center justify-center">
+                        <i class="fas fa-microphone text-white text-sm"></i>
+                    </div>
+                    <span class="text-2xl font-bold text-gray-900">Voice RAG</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#" class="text-gray-600 hover:text-gray-900 transition">Platform</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 transition">Use Cases</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 transition">Pricing</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 transition">Company</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600">#1 on ProductHunt</span>
+                    <a href="#demo" class="px-6 py-2 gradient-bg text-white rounded-full font-medium hover:opacity-90 transition flex items-center space-x-2">
+                        <span>Get started</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <main class="pt-20">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- Left Side - Text -->
+                <div class="space-y-6">
+                    <div class="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center">
+                        <i class="fas fa-brain text-white text-2xl"></i>
+                    </div>
+                    <h1 class="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+                        अपने उत्पाद को बोले जा सकें वादे में बदलें
+                    </h1>
+                    <p class="text-xl text-gray-600 max-w-md">
+                        मिनटों में Voice AI एजेंट डिप्लॉय करें — कोड नहीं, कॉल सेंटर नहीं
+                    </p>
+                    <div class="flex space-x-4">
+                        <button class="px-8 py-4 gradient-bg text-white rounded-full font-semibold hover:opacity-90 transition flex items-center space-x-2">
+                            <i class="fas fa-play"></i>
+                            <span>लाइव डेमो को देखें</button>
+                        <button class="px-8 py-4 border-2 border-gray-300 text-gray-700 rounded-full font-semibold hover:border-gray-400 transition">
+                            कॉल बुकें
+                        </button>
+                    </div>
+                    <div class="pt-6">
+                        <p class="text-sm text-gray-500 mb-3">दुनिया भर के टीमों द्वारा भरोसा करें:</p>
+                        <div class="flex items-center space-x-6 opacity-60">
+                            <span class="font-medium">Adobe</span>
+                            <span class="font-medium">Intel</span>
+                            <span class="font-medium">Google</span>
+                            <span class="font-medium">Sony</span>
+                            <span class="font-medium">Amazon</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side - Demo -->
+                <div class="relative">
+                    <div class="relative rounded-3xl overflow-hidden border-2 border-white shadow-2xl">
+                        <img src="https://images.unsplash.com/photo-1542744095-fcf48d80b0fd?w=800&q=80" alt="Flowers background" class="w-full h-96 object-cover">
+                        <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1542744095-fcf48d80b0fd?w=800&q=80'); opacity: 0.3"></div>
+                        <div class="absolute inset-0" style="background: linear-gradient(135deg, rgba(63, 63, 70, 0.95) 0%, rgba(29, 29, 31, 0.95) 100%);">
+                            <div class="p-6">
+                                <!-- Header -->
+                                <div class="flex items-center justify-between mb-6">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 gradient-bg rounded-full flex items-center justify-center">
+                                            <i class="fas fa-robot text-white text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-white font-semibold">आपका असिस्टेंट</h3>
+                                            <div class="flex items-center space-x-1">
+                                                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                <span class="text-green-400 text-xs">ऑनलाइन</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Chat Messages -->
+                                <div class="space-y-4 mb-6">
+                                    <div class="glass-dark rounded-2xl p-4">
+                                        <div class="text-white text-sm mb-1">AI</div>
+                                        <div class="text-white font-medium">नमस्ते! आप में कैसे मदद कर सकता हूँ?</div>
+                                        <div class="text-gray-400 text-xs mt-2">9:31 AM</div>
+                                    </div>
+                                    
+                                    <div class="glass rounded-2xl p-4 ml-8">
+                                        <div class="text-gray-300 text-sm mb-1">आप</div>
+                                        <div class="text-white font-medium">मुझे अपने ऑर्डर #12345 का डिलीवरी पता बदलना है</div>
+                                        <div class="text-gray-400 text-xs mt-2">9:31 AM</div>
+                                    </div>
+
+                                    <div class="glass-dark rounded-2xl p-4">
+                                        <div class="text-white text-sm mb-1">AI</div>
+                                        <div class="text-white font-medium">ज़रूर। कृपया मुझे नया डिलीवरी पता बताएं।</div>
+                                        <div class="text-gray-400 text-xs mt-2">9:31 AM</div>
+                                    </div>
+                                </div>
+
+                                <!-- Audio Bar -->
+                                <div class="glass rounded-2xl p-4">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="fas fa-circle text-red-500"></i>
+                                        <span class="text-gray-300 text-sm">सुन रहा है...</span>
+                                        <div class="w-32 h-1 bg-gray-700 rounded-full overflow-hidden">
+                                            <div class="h-full w-1/2 bg-green-500 rounded-full"></div>
+                                        </div>
+                                        <span class="text-gray-400 text-sm">00:10</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Features Section -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">मुख्य सुविधाएँ</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">हमारा Voice RAG आपके उत्पाद को आधुनिक वॉइस की दुनिया में ले जाता है</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="glass rounded-3xl p-8 text-center">
+                    <div class="w-16 h-16 gradient-bg rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-bolt text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">तेज़ डिप्लॉयमेंट</h3>
+                    <p class="text-gray-600">मिनटों में सेट अप करें, कोई कोडिंग की आवश्यकता नहीं</p>
+                </div>
+                
+                <div class="glass rounded-3xl p-8 text-center">
+                    <div class="w-16 h-16 gradient-bg rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-brain text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">उन्नत रिट्रीवल</h3>
+                    <p class="text-gray-600">FAISS वेक्टर खोज के साथ सटीक जवाबदेही</p>
+                </div>
+                
+                <div class="glass rounded-3xl p-8 text-center">
+                    <div class="w-16 h-16 gradient-bg rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-language text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">बहुभाषिक</h3>
+                    <p class="text-gray-600">हिंदी, बंगाली, और 14+ भाषाओं में समर्थन</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- API Section -->
+    <section class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-6">
+                    <h2 class="text-4xl font-bold text-gray-900">शक्तिशाली API एपीसेंट्री</h2>
+                    <p class="text-lg text-gray-600">हमारे मॉडल को आपके ऐप में आसानी से एम्बेड करें</p>
+                    <div class="space-y-4">
+                        <div class="glass rounded-2xl p-4">
+                            <div class="text-green-400 font-mono text-sm">POST /transcribe</div>
+                            <div class="text-gray-400 text-xs">Speech-to-Text ट्रांसक्रिप्शन</div>
+                        </div>
+                        <div class="glass rounded-2xl p-4">
+                            <div class="text-green-400 font-mono text-sm">POST /query</div>
+                            <div class="text-gray-400 text-xs">टेक्स्ट-आधारित रिट्रीवल</div>
+                        </div>
+                        <div class="glass rounded-2xl p-4">
+                            <div class="text-green-400 font-mono text-sm">POST /voice-query</div>
+                            <div class="text-gray-400 text-xs">वॉइस-क्वेरी मॉडल</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass rounded-3xl p-8">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">API डॉक्सेस</h3>
+                    <div class="space-y-3 mb-6">
+                        <div class="border-l-2 border-gray-200 pl-4">
+                            <div class="font-medium text-gray-900">Transcription</div>
+                            <div class="text-gray-500 text-sm">Convert speech to text</div>
+                        </div>
+                        <div class="border-l-2 border-gray-200 pl-4">
+                            <div class="font-medium text-gray-900">Retrieval</div>
+                            <div class="text-gray-500 text-sm">Search and retrieve relevant content</div>
+                        </div>
+                        <div class="border-l-2 border-gray-200 pl-4">
+                            <div class="font-medium text-gray-900">Voice Query</div>
+                            <div class="text-gray-500 text-sm">Complete voice-powered search</div>
+                        </div>
+                    </div>
+                    <button class="w-full px-6 py-3 gradient-bg text-white rounded-full font-semibold hover:opacity-90 transition">
+                        API डॉक्सेस देखें
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-300 py-12">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-8 h-8 gradient-bg rounded-full flex items-center justify-center">
+                            <i class="fas fa-microphone text-white text-sm"></i>
+                        </div>
+                        <span class="text-2xl font-bold text-white">Voice RAG</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">आपके उत्पाद का स्मार्ट वॉइस असिस्टेंट</p>
+                </div>
+                
+                <div>
+                    <h3 class="text-white font-semibold mb-4">उपयोग</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-gray-300 transition">डॉक्सेस</a></li>
+                        <li><a href="#" class="hover:text-gray-300 transition">डेमो</a></li>
+                        <li><a href="#" class="hover:text-gray-300 transition">API</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-white font-semibold mb-4">कम्पनी</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-gray-300 transition">हमार बारे में</a></li>
+                        <li><a href="#" class="hover:text-gray-300 transition">संपर्क करें</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-white font-semibold mb-4">अपडेट रहें</h3>
+                    <form class="flex flex-col space-y-2">
+                        <input type="email" placeholder="ईमेल दर्ज करें" class="px-4 py-2 rounded-full bg-gray-800 text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button type="submit" class="px-4 py-2 gradient-bg text-white rounded-full text-sm font-medium hover:opacity-90 transition">
+                            साइन अप करें
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm">
+                <p>&copy; 2024 Voice RAG। सभी अधिकार सुरक्षित।</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Simple animation for audio bar
+        document.addEventListener('DOMContentLoaded', function() {
+            const audioBar = document.querySelector('.h-full.w-1\\/2');
+            if (audioBar) {
+                setInterval(() => {
+                    const width = Math.random() * 100;
+                    audioBar.style.width = width + '%';
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>

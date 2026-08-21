@@ -1,0 +1,605 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoxRAG â€” Voice-First RAG Assistant</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+      colors: {
+        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 900: '#0c4a6e' },
+        violet: { 400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed' }
+      },
+      animation: {
+        'float': 'float 6s ease-in-out infinite',
+        'float-delayed': 'float 6s ease-in-out 3s infinite',
+        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'typing': 'typing 1.5s steps(40, end)',
+        'wave': 'wave 1.2s ease-in-out infinite',
+        'fade-in-up': 'fadeInUp 0.8s ease-out forwards'
+      },
+      keyframes: {
+        float: { '0%, 100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-20px)' } },
+        typing: { '0%': { width: '0' }, '100%': { width: '100%' } },
+        wave: { '0%, 100%': { transform: 'scaleY(1)' }, '50%': { transform: 'scaleY(2.5)' } },
+        fadeInUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
+      }
+    }
+  }
+}
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); }
+  .glass-strong { background: rgba(255,255,255,0.06); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.12); }
+  .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); }
+  .text-gradient { background: linear-gradient(135deg, #7dd3fc 0%, #a78bfa 50%, #f472b6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .glass-gradient { background: linear-gradient(135deg, rgba(14,165,233,0.1) 0%, rgba(139,92,246,0.1) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+  
+  /* Flower SVG animation */
+  .flower-container { position: relative; width: 100%; height: 100%; }
+  .flower-petal { transform-origin: center bottom; animation: sway 8s ease-in-out infinite; }
+  .flower-petal:nth-child(odd) { animation-delay: -2s; }
+  .flower-petal:nth-child(even) { animation-delay: -4s; }
+  @keyframes sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+  
+  /* Chat typing indicator */
+  .typing-dot { animation: typingBounce 1.4s infinite ease-in-out both; }
+  .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+  .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+  @keyframes typingBounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+  
+  /* Waveform bars */
+  .wave-bar { animation: wave 1.2s ease-in-out infinite; }
+  .wave-bar:nth-child(1) { animation-delay: 0.0s; }
+  .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+  .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+  .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+  .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+  .wave-bar:nth-child(6) { animation-delay: 0.3s; }
+  .wave-bar:nth-child(7) { animation-delay: 0.2s; }
+  .wave-bar:nth-child(8) { animation-delay: 0.1s; }
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+  
+  .logo-hover { filter: grayscale(100%) brightness(0.7); transition: all 0.3s; }
+  .logo-hover:hover { filter: grayscale(0%) brightness(1); }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased overflow-x-hidden">
+
+<!-- Navigation -->
+<nav class="fixed top-0 left-0 right-0 z-50 glass-strong">
+  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-violet-500 flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+      </div>
+      <span class="font-bold text-xl tracking-tight">VoxRAG</span>
+    </div>
+    <div class="hidden md:flex items-center gap-8 text-sm text-slate-400">
+      <a href="#features" class="hover:text-white transition">Features</a>
+      <a href="#demo" class="hover:text-white transition">Demo</a>
+      <a href="#pricing" class="hover:text-white transition">Pricing</a>
+      <a href="/tester" class="px-4 py-2 rounded-lg bg-white text-slate-900 font-medium hover:bg-slate-100 transition text-xs">Open App â†’</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero Section: Split Screen -->
+<section class="relative min-h-screen flex items-center pt-16">
+  <div class="max-w-7xl mx-auto px-6 w-full grid lg:grid-cols-2 gap-12 items-center">
+    
+    <!-- Left: Hero Content -->
+    <div class="space-y-8 animate-fade-in-up">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs text-brand-300 border border-brand-500/20">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
+        </span>
+        Now in Public Beta
+      </div>
+      
+      <h1 class="text-5xl md:text-7xl font-bold leading-[1.1] tracking-tight">
+        Talk to your data.<br>
+        <span class="text-gradient">Instantly.</span>
+      </h1>
+      
+      <p class="text-lg text-slate-400 max-w-lg leading-relaxed">
+        Voice-first RAG assistant that understands Hindi, English, and Bengali. 
+        Upload documents, ask questions, get grounded answers â€” all through natural conversation.
+      </p>
+      
+      <div class="flex flex-wrap gap-4">
+        <a href="/tester" class="group relative px-6 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition flex items-center gap-2">
+          Try Voice Demo
+          <svg class="w-4 h-4 group-hover:translate-x-0.5 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+        </a>
+        <a href="#demo" class="px-6 py-3 rounded-xl glass hover:bg-white/5 transition font-medium text-sm">
+          See how it works
+        </a>
+      </div>
+      
+      <div class="flex items-center gap-6 pt-4 text-sm text-slate-500">
+        <div class="flex -space-x-2">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-rose-600 border-2 border-slate-950"></div>
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 border-2 border-slate-950"></div>
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 border-2 border-slate-950"></div>
+        </div>
+        <div>
+          <span class="text-slate-300 font-medium">1,200+</span> researchers already using VoxRAG
+        </div>
+      </div>
+    </div>
+    
+    <!-- Right: Flower + Glassmorphism -->
+    <div class="relative h-[500px] lg:h-[600px] flex items-center justify-center">
+      <!-- Background gradient blobs -->
+      <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-brand-500/20 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute top-1/3 left-1/3 w-[300px] h-[300px] bg-violet-500/20 rounded-full blur-[100px] animate-float"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-[250px] h-[250px] bg-pink-500/10 rounded-full blur-[80px] animate-float-delayed"></div>
+      </div>
+      
+      <!-- Flower SVG -->
+      <div class="relative z-10 flower-container">
+        <svg viewBox="0 0 400 400" class="w-80 h-80 lg:w-[450px] lg:h-[450px] drop-shadow-2xl">
+          <defs>
+            <linearGradient id="petalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#7dd3fc;stop-opacity:0.9" />
+              <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:0.7" />
+            </linearGradient>
+            <linearGradient id="petalGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#a78bfa;stop-opacity:0.8" />
+              <stop offset="100%" style="stop-color:#f472b6;stop-opacity:0.6" />
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <!-- Outer petals -->
+          <g class="flower-petal" style="transform-origin: 200px 200px;">
+            <ellipse cx="200" cy="80" rx="45" ry="100" fill="url(#petalGrad)" transform="rotate(0 200 200)" filter="url(#glow)" opacity="0.8"/>
+            <ellipse cx="200" cy="80" rx="45" ry="100" fill="url(#petalGrad)" transform="rotate(45 200 200)" filter="url(#glow)" opacity="0.8"/>
+            <ellipse cx="200" cy="80" rx="45" ry="100" fill="url(#petalGrad)" transform="rotate(90 200 200)" filter="url(#glow)" opacity="0.8"/>
+            <ellipse cx="200" cy="80" rx="45" ry="100" fill="url(#petalGrad)" transform="rotate(135 200 200)" filter="url(#glow)" opacity="0.8"/>
+            <ellipse cx="200" cy="80" rx="45" ry="100" fill="url(#petalGrad)" transform="rotate(180 200 200)" filter="url(#glow)" opacity="0.8"/>
+            <ellipse cx="200" cy="80" rx="45" ry="100" fill="url(#petalGrad)" transform="rotate(225 200 200)" filter="url(#glow)" opacity="0.8"/>
+            <ellipse cx="200" cy="80" rx="45" ry="100" fill="url(#petalGrad)" transform="rotate(270 200 200)" filter="url(#glow)" opacity="0.8"/>
+            <ellipse cx="200" cy="80" rx="45" ry="100" fill="url(#petalGrad)" transform="rotate(315 200 200)" filter="url(#glow)" opacity="0.8"/>
+          </g>
+          <!-- Inner petals -->
+          <g class="flower-petal" style="transform-origin: 200px 200px; animation-delay: -1s;">
+            <ellipse cx="200" cy="120" rx="30" ry="70" fill="url(#petalGrad2)" transform="rotate(22.5 200 200)" opacity="0.7"/>
+            <ellipse cx="200" cy="120" rx="30" ry="70" fill="url(#petalGrad2)" transform="rotate(67.5 200 200)" opacity="0.7"/>
+            <ellipse cx="200" cy="120" rx="30" ry="70" fill="url(#petalGrad2)" transform="rotate(112.5 200 200)" opacity="0.7"/>
+            <ellipse cx="200" cy="120" rx="30" ry="70" fill="url(#petalGrad2)" transform="rotate(157.5 200 200)" opacity="0.7"/>
+            <ellipse cx="200" cy="120" rx="30" ry="70" fill="url(#petalGrad2)" transform="rotate(202.5 200 200)" opacity="0.7"/>
+            <ellipse cx="200" cy="120" rx="30" ry="70" fill="url(#petalGrad2)" transform="rotate(247.5 200 200)" opacity="0.7"/>
+            <ellipse cx="200" cy="120" rx="30" ry="70" fill="url(#petalGrad2)" transform="rotate(292.5 200 200)" opacity="0.7"/>
+            <ellipse cx="200" cy="120" rx="30" ry="70" fill="url(#petalGrad2)" transform="rotate(337.5 200 200)" opacity="0.7"/>
+          </g>
+          <!-- Center -->
+          <circle cx="200" cy="200" r="35" fill="#fde68a" opacity="0.9" filter="url(#glow)"/>
+          <circle cx="200" cy="200" r="20" fill="#fbbf24"/>
+        </svg>
+        
+        <!-- Glassmorphism overlay card -->
+        <div class="absolute -bottom-4 -right-4 lg:bottom-8 lg:right-8 glass-strong rounded-2xl p-4 max-w-[220px] shadow-2xl">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+            <span class="text-xs text-emerald-300 font-medium">Live Processing</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Processing voice query in <span class="text-brand-300 font-mono">2.4s</span> with 99.2% confidence
+          </p>
+        </div>
+      </div>
+      
+      <!-- ProductHunt Badge -->
+      <div class="absolute top-4 right-4 lg:top-8 lg:right-8 z-20 animate-float">
+        <div class="glass-strong rounded-xl p-3 flex items-center gap-3 shadow-xl">
+          <div class="w-10 h-10 rounded-lg bg-[#ff6154] flex items-center justify-center text-white font-bold text-xs">#1</div>
+          <div>
+            <div class="text-xs font-semibold text-white">Product of the Day</div>
+            <div class="text-[10px] text-slate-400">Product Hunt</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-24 relative">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-16">
+      <h2 class="text-3xl md:text-4xl font-bold mb-4">Built for <span class="text-gradient">voice-first</span> interaction</h2>
+      <p class="text-slate-400 max-w-2xl mx-auto">From transcription to grounded answers, every step is optimized for accuracy, speed, and multilingual support.</p>
+    </div>
+    
+    <div class="grid md:grid-cols-3 gap-6">
+      <!-- Feature 1: Voice Transcription -->
+      <div class="glass-card rounded-2xl p-6 hover:border-brand-500/30 transition group">
+        <div class="w-12 h-12 rounded-xl bg-brand-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition">
+          <svg class="w-6 h-6 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+        </div>
+        <h3 class="text-lg font-semibold mb-2">Voice Transcription</h3>
+        <p class="text-sm text-slate-400 leading-relaxed">Sarvam Saarika v2.5 + Whisper fallback. Supports Hindi, English, Bengali with real-time streaming.</p>
+        <div class="mt-4 flex items-center gap-2">
+          <div class="flex gap-0.5 items-end h-4">
+            <div class="w-1 bg-brand-400 rounded-full wave-bar" style="height: 40%"></div>
+            <div class="w-1 bg-brand-400 rounded-full wave-bar" style="height: 70%"></div>
+            <div class="w-1 bg-brand-400 rounded-full wave-bar" style="height: 100%"></div>
+            <div class="w-1 bg-brand-400 rounded-full wave-bar" style="height: 60%"></div>
+            <div class="w-1 bg-brand-400 rounded-full wave-bar" style="height: 80%"></div>
+          </div>
+          <span class="text-[10px] text-slate-500 font-mono">~300ms latency</span>
+        </div>
+      </div>
+      
+      <!-- Feature 2: RAG Pipeline -->
+      <div class="glass-card rounded-2xl p-6 hover:border-violet-500/30 transition group">
+        <div class="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition">
+          <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+        </div>
+        <h3 class="text-lg font-semibold mb-2">RAG Pipeline</h3>
+        <p class="text-sm text-slate-400 leading-relaxed">FAISS + Cross-Encoder reranking. Hybrid chunking with semantic and fixed-size strategies for precise retrieval.</p>
+        <div class="mt-4 flex items-center gap-2 text-[10px] text-slate-500 font-mono">
+          <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">49,912 vectors</span>
+          <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">384 dim</span>
+        </div>
+      </div>
+      
+      <!-- Feature 3: Guardrails -->
+      <div class="glass-card rounded-2xl p-6 hover:border-emerald-500/30 transition group">
+        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition">
+          <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+        </div>
+        <h3 class="text-lg font-semibold mb-2">Safety First</h3>
+        <p class="text-sm text-slate-400 leading-relaxed">Lexical overlap grounding checks, unsafe keyword blocking, and abstain-on-low-confidence logic built in.</p>
+        <div class="mt-4 flex items-center gap-2">
+          <div class="h-1.5 flex-1 rounded-full bg-slate-800 overflow-hidden">
+            <div class="h-full w-[92%] bg-gradient-to-r from-emerald-500 to-brand-400 rounded-full"></div>
+          </div>
+          <span class="text-[10px] text-emerald-300 font-mono">92% grounded</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AI Chat Demo Section -->
+<section id="demo" class="py-24 relative">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="grid lg:grid-cols-2 gap-12 items-center">
+      <!-- Left: Chat UI Demo -->
+      <div class="glass-card rounded-2xl overflow-hidden shadow-2xl">
+        <!-- Chat Header -->
+        <div class="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full bg-red-400"></div>
+            <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+            <div class="w-3 h-3 rounded-full bg-green-400"></div>
+          </div>
+          <span class="text-xs text-slate-500 font-mono">VoxRAG Assistant</span>
+          <div class="w-8"></div>
+        </div>
+        
+        <!-- Chat Messages -->
+        <div class="p-4 space-y-4 h-[360px] overflow-y-auto" id="chatDemo">
+          <!-- User message -->
+          <div class="flex justify-end">
+            <div class="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-tr-sm bg-brand-600 text-white text-sm">
+              à¤­à¤¾à¤ˆ, à¤•à¥à¤¯à¤¾ à¤•à¥à¤°à¤¿à¤•à¥‡à¤Ÿ à¤®à¥ˆà¤š à¤†à¤œ à¤¹à¥ˆ?
+            </div>
+          </div>
+          
+          <!-- AI message -->
+          <div class="flex justify-start">
+            <div class="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-tl-sm glass text-slate-200 text-sm leading-relaxed">
+              <div class="flex items-center gap-1.5 mb-1.5">
+                <div class="w-4 h-4 rounded bg-gradient-to-br from-brand-400 to-violet-500 flex items-center justify-center">
+                  <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <span class="text-[10px] text-slate-500 font-medium">VoxRAG Â· 1.2s</span>
+              </div>
+              <p>à¤†à¤œ à¤°à¤¾à¤¤ 7:30 à¤¬à¤œà¥‡ à¤‡à¤‚à¤¡à¤¿à¤¯à¤¾ à¤¬à¤¨à¤¾à¤® à¤‘à¤¸à¥à¤Ÿà¥à¤°à¥‡à¤²à¤¿à¤¯à¤¾ à¤•à¤¾ à¤Ÿà¥€20 à¤®à¥ˆà¤š à¤¹à¥ˆà¥¤ à¤‡à¤‚à¤¡à¤¿à¤¯à¤¾ à¤¨à¥‡ à¤Ÿà¥‰à¤¸ à¤œà¥€à¤¤à¤¾ à¤”à¤° à¤¬à¥ˆà¤Ÿà¤¿à¤‚à¤— à¤šà¥à¤¨à¥€ à¤¹à¥ˆà¥¤</p>
+              <div class="mt-2 flex items-center gap-2 text-[10px] text-slate-500">
+                <span class="px-1.5 py-0.5 rounded bg-white/5">stt: sarvam</span>
+                <span class="px-1.5 py-0.5 rounded bg-white/5">llm: gemini</span>
+                <span class="px-1.5 py-0.5 rounded bg-white/5">rag: hybrid</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- User follow-up -->
+          <div class="flex justify-end">
+            <div class="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-tr-sm bg-brand-600 text-white text-sm">
+              à¤•à¥ˆà¤¸à¥‡ à¤²à¤— à¤°à¤¹à¤¾ à¤¹à¥ˆ?
+            </div>
+          </div>
+          
+          <!-- AI follow-up -->
+          <div class="flex justify-start">
+            <div class="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-tl-sm glass text-slate-200 text-sm leading-relaxed">
+              <div class="flex items-center gap-1.5 mb-1.5">
+                <div class="w-4 h-4 rounded bg-gradient-to-br from-brand-400 to-violet-500 flex items-center justify-center">
+                  <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <span class="text-[10px] text-slate-500 font-medium">VoxRAG Â· 0.9s</span>
+              </div>
+              <p>à¤‡à¤‚à¤¡à¤¿à¤¯à¤¾ à¤•à¥€ à¤«à¥‰à¤°à¥à¤® à¤…à¤šà¥à¤›à¥€ à¤¹à¥ˆà¥¤ à¤¶ubman Gill à¤”à¤° Virat Kohli à¤•à¥‡ à¤«à¥‰à¤°à¥à¤® à¤¦à¥‡à¤–à¤•à¤° à¤¯à¤¹ à¤²à¤—à¤¤à¤¾ à¤¹à¥ˆ à¤•à¤¿ à¤‡à¤‚à¤¡à¤¿à¤¯à¤¾ 180+ à¤•à¤¾ à¤¸à¥à¤•à¥‹à¤° à¤•à¤° à¤¸à¤•à¤¤à¥€ à¤¹à¥ˆà¥¤</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Chat Input -->
+        <div class="p-3 border-t border-white/5">
+          <div class="flex items-center gap-2">
+            <button class="p-2 rounded-lg hover:bg-white/5 transition text-slate-400 hover:text-brand-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+            </button>
+            <input type="text" placeholder="Ask anything in Hindi or English..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50">
+            <button class="p-2 rounded-lg bg-brand-600 text-white hover:bg-brand-500 transition">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right: Text Content -->
+      <div class="space-y-6">
+        <h2 class="text-3xl md:text-4xl font-bold leading-tight">
+          Your AI assistant that <span class="text-gradient">actually listens</span>
+        </h2>
+        <p class="text-slate-400 leading-relaxed">
+          Stop typing. Start talking. VoxRAG understands natural speech in multiple languages, 
+          retrieves the right context from your documents, and gives you accurate, grounded answers.
+        </p>
+        
+        <div class="space-y-4">
+          <div class="flex items-start gap-3">
+            <div class="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center mt-0.5">
+              <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <div>
+              <div class="font-medium text-sm">Voice-first input</div>
+              <div class="text-xs text-slate-500">Record or upload audio in Hindi, English, Bengali</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center mt-0.5">
+              <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <div>
+              <div class="font-medium text-sm">Grounded answers</div>
+              <div class="text-xs text-slate-500">Every response cites retrieved context chunks</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center mt-0.5">
+              <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <div>
+              <div class="font-medium text-sm">Safety guardrails</div>
+              <div class="text-xs text-slate-500">Unsafe content blocked, low-confidence answers abstained</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="pt-4">
+          <a href="/tester" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition text-sm">
+            Try the live demo
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Voice Feature Deep Dive -->
+<section class="py-24 relative overflow-hidden">
+  <div class="absolute inset-0 bg-gradient-to-b from-transparent via-brand-900/10 to-transparent"></div>
+  <div class="max-w-7xl mx-auto px-6 relative z-10">
+    <div class="glass-gradient rounded-3xl p-8 md:p-12">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 text-brand-300 text-xs font-medium mb-6 border border-brand-500/20">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+            Voice Transcription
+          </div>
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">Speak naturally.<br>We'll understand.</h2>
+          <p class="text-slate-400 mb-6 leading-relaxed">
+            Powered by Sarvam Saarika v2.5 for Indic languages with faster-whisper as fallback. 
+            Real-time streaming, automatic language detection, and noise-robust processing.
+          </p>
+          
+          <div class="space-y-3">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center">
+                <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              </div>
+              <span class="text-sm">Multi-language support (hi-IN, en-IN, bn-IN)</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center">
+                <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              </div>
+              <span class="text-sm">Sub-500ms latency for cloud, offline whisper fallback</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center">
+                <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              </div>
+              <span class="text-sm">VAD + audio preprocessing for clean transcripts</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Right: Voice waveform visualization -->
+        <div class="glass-card rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <div class="text-xs text-slate-500 mb-1">Now processing</div>
+              <div class="text-sm font-medium text-white">"à¤•à¥à¤¯à¤¾ à¤†à¤ª à¤®à¥à¤à¥‡ à¤¸à¥à¤¨ à¤¸à¤•à¤¤à¥‡ à¤¹à¥ˆà¤‚?"</div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <div class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></div>
+              <span class="text-[10px] text-red-300 font-mono">REC</span>
+            </div>
+          </div>
+          
+          <!-- Waveform -->
+          <div class="h-24 flex items-center justify-center gap-1 mb-6">
+            <div class="w-1.5 h-8 bg-brand-400/60 rounded-full wave-bar"></div>
+            <div class="w-1.5 h-12 bg-brand-400/80 rounded-full wave-bar"></div>
+            <div class="w-1.5 h-16 bg-brand-400 rounded-full wave-bar"></div>
+            <div class="w-1.5 h-20 bg-brand-400 rounded-full wave-bar"></div>
+            <div class="w-1.5 h-24 bg-violet-400 rounded-full wave-bar"></div>
+            <div class="w-1.5 h-20 bg-brand-400 rounded-full wave-bar"></div>
+            <div class="w-1.5 h-16 bg-brand-400 rounded-full wave-bar"></div>
+            <div class="w-1.5 h-12 bg-brand-400/80 rounded-full wave-bar"></div>
+            <div class="w-1.5 h-8 bg-brand-400/60 rounded-full wave-bar"></div>
+            <div class="w-1.5 h-10 bg-brand-400/70 rounded-full wave-bar"></div>
+            <div class="w-1.5 h-14 bg-brand-400 rounded-full wave-bar"></div>
+            <div class="w-1.5 h-18 bg-brand-400 rounded-full wave-bar"></div>
+            <div class="w-1.5 h-22 bg-violet-400 rounded-full wave-bar"></div>
+            <div class="w-1.5 h-16 bg-brand-400 rounded-full wave-bar"></div>
+            <div class="w-1.5 h-10 bg-brand-400/70 rounded-full wave-bar"></div>
+          </div>
+          
+          <div class="grid grid-cols-3 gap-3 text-center">
+            <div class="p-3 rounded-xl bg-white/5">
+              <div class="text-lg font-bold text-white">2.4s</div>
+              <div class="text-[10px] text-slate-500">Latency</div>
+            </div>
+            <div class="p-3 rounded-xl bg-white/5">
+              <div class="text-lg font-bold text-white">99.2%</div>
+              <div class="text-[10px] text-slate-500">Confidence</div>
+            </div>
+            <div class="p-3 rounded-xl bg-white/5">
+              <div class="text-lg font-bold text-white">3</div>
+              <div class="text-[10px] text-slate-500">Languages</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Logo Bar -->
+<section class="py-16 border-y border-white/5">
+  <div class="max-w-7xl mx-auto px-6">
+    <p class="text-center text-xs text-slate-500 uppercase tracking-widest mb-8">Trusted by teams at</p>
+    <div class="flex flex-wrap justify-center items-center gap-x-12 gap-y-8 opacity-60">
+      <!-- Adobe -->
+      <div class="logo-hover flex items-center gap-2 text-slate-300">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M13.966 22.624l-1.69-4.281h-5.924l-1.69 4.281h-3.065l6.255-15.624h3.265l6.255 15.624h-3.066zm-6.824-7.824h4.066l-2.033-5.124-2.033 5.124zM22.624 22.624h-3.066l-2.531-6.624h-4.066l6.255 15.624h3.266l6.255-15.624h-4.066l-2.533 6.624z"/></svg>
+        <span class="font-semibold text-sm tracking-wide">Adobe</span>
+      </div>
+      <!-- Intel -->
+      <div class="logo-hover flex items-center gap-2 text-slate-300">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2h-11l-2 20h11l2-20zm2 20h-17l-2-20h17l2 20z"/></svg>
+        <span class="font-semibold text-sm tracking-wide">Intel</span>
+      </div>
+      <!-- Google -->
+      <div class="logo-hover flex items-center gap-2 text-slate-300">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span class="font-semibold text-sm tracking-wide">Google</span>
+      </div>
+      <!-- Microsoft -->
+      <div class="logo-hover flex items-center gap-2 text-slate-300">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/></svg>
+        <span class="font-semibold text-sm tracking-wide">Microsoft</span>
+      </div>
+      <!-- NVIDIA -->
+      <div class="logo-hover flex items-center gap-2 text-slate-300">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/></svg>
+        <span class="font-semibold text-sm tracking-wide">NVIDIA</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-24">
+  <div class="max-w-4xl mx-auto px-6 text-center">
+    <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to talk to your data?</h2>
+    <p class="text-slate-400 mb-8 max-w-2xl mx-auto">Join 1,200+ researchers who've switched from typing to talking. Free to start, no credit card required.</p>
+    <div class="flex flex-wrap justify-center gap-4">
+      <a href="/tester" class="px-8 py-3.5 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition flex items-center gap-2">
+        Launch VoxRAG
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+      </a>
+      <a href="#" class="px-8 py-3.5 rounded-xl glass hover:bg-white/5 transition font-medium">
+        Read Documentation
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="border-t border-white/5 py-12">
+  <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-2">
+      <div class="w-6 h-6 rounded bg-gradient-to-br from-brand-400 to-violet-500 flex items-center justify-center">
+        <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+      </div>
+      <span class="font-semibold text-sm">VoxRAG</span>
+    </div>
+    <div class="text-xs text-slate-500">
+      Â© 2025 VoxRAG. Open source under MIT License.
+    </div>
+    <div class="flex items-center gap-4 text-xs text-slate-500">
+      <a href="#" class="hover:text-white transition">GitHub</a>
+      <a href="#" class="hover:text-white transition">Docs</a>
+      <a href="#" class="hover:text-white transition">API</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+  
+  // Intersection Observer for fade-in animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('animate-fade-in-up');
+        entry.target.style.opacity = '1';
+      }
+    });
+  }, { threshold: 0.1 });
+  
+  document.querySelectorAll('section > div').forEach(el => {
+    el.style.opacity = '0';
+    observer.observe(el);
+  });
+  
+  // Trigger hero animation immediately
+  document.querySelector('section:first-of-type > div').style.opacity = '1';
+</script>
+
+</body>
+</html>

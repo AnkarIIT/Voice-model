@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice RAG Tester</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  h1 { font-size: 22px; font-weight: 600; }
+  h1 span { color: #38bdf8; }
+  .pill {
+    font-size: 12px; padding: 6px 12px; border-radius: 999px;
+    background: #334155; color: #94a3b8;
+  }
+  .pill.ok { background: #064e3b; color: #34d399; }
+  .pill.bad { background: #7f1d1d; color: #fca5a5; }
+  .card {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid #334155;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 18px;
+    backdrop-filter: blur(6px);
+  }
+  .card h2 { font-size: 15px; font-weight: 600; color: #7dd3fc; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+  textarea, input[type=text], select {
+    width: 100%; background: #0f172a; border: 1px solid #475569;
+    border-radius: 8px; padding: 11px 13px; color: #e2e8f0;
+    font-size: 14px; outline: none; resize: vertical;
+  }
+  textarea:focus, input[type=text]:focus { border-color: #38bdf8; }
+  .row { display: flex; gap: 10px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
+  .row label { font-size: 13px; color: #94a3b8; display: flex; gap: 6px; align-items: center; }
+  button {
+    background: #0284c7; color: white; border: none; border-radius: 8px;
+    padding: 11px 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover { background: #0369a1; }
+  button:disabled { background: #475569; cursor: not-allowed; }
+  button.rec { background: #dc2626; animation: pulse 1.2s infinite; }
+  @keyframes pulse { 50% { opacity: 0.6; } }
+  .spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+    border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 6px;
+    vertical-align: -2px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .status-badge {
+    display: inline-block; padding: 4px 10px; border-radius: 6px;
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+  }
+  .st-ok { background: #064e3b; color: #34d399; }
+  .st-block, .st-reject, .st-error, .st-stt_failed { background: #7f1d1d; color: #fca5a5; }
+  .st-abstain, .st-flag { background: #78350f; color: #fcd34d; }
+  .answer {
+    background: #0f172a; border-left: 3px solid #38bdf8;
+    padding: 14px; border-radius: 0 8px 8px 0;
+    margin-top: 12px; line-height: 1.55; font-size: 14.5px; white-space: pre-wrap;
+  }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .chip {
+    font-size: 11.5px; background: #1e293b; border: 1px solid #475569;
+    padding: 4px 10px; border-radius: 999px; color: #cbd5e1;
+  }
+  details { margin-top: 14px; }
+  summary { cursor: pointer; font-size: 13px; color: #7dd3fc; }
+  .chunk {
+    background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+    padding: 10px 12px; margin-top: 8px; font-size: 13px; line-height: 1.5;
+  }
+  .chunk .score { color: #38bdf8; font-weight: 600; }
+  .chunk .strategy { color: #a78bfa; font-size: 11px; }
+  .err-box {
+    background: #450a0a; border: 1px solid #b91c1c; color: #fecaca;
+    padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 13px;
+  }
+  audio { width: 100%; margin-top: 10px; }
+  .hint { font-size: 12px; color: #64748b; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🎙️ Voice <span>RAG</span> Tester</h1>
+    <div style="display:flex;gap:12px;align-items:center">
+      <label style="font-size:13px;color:#94a3b8;display:flex;gap:5px;align-items:center;cursor:pointer">
+        <input type="checkbox" id="speakToggle" checked> 🔊 bolke sunao
+      </label>
+      <div id="healthPill" class="pill">checking…</div>
+    </div>
+  </header>
+
+  <div class="card">
+    <h2>Text Query</h2>
+    <textarea id="q" rows="2" placeholder="e.g. what is the capital of India?"></textarea>
+    <div class="row">
+      <label>k
+        <select id="k" style="width:auto">
+          <option>3</option><option selected>5</option><option>10</option>
+        </select>
+      </label>
+      <label><input type="checkbox" id="rerank"> rerank (slow first time)</label>
+      <button id="askBtn" onclick="ask()">Ask</button>
+    </div>
+    <div id="textOut"></div>
+  </div>
+
+  <div class="card">
+    <h2>Voice Query</h2>
+    <div class="row" style="margin-top:0">
+      <button id="recBtn" onclick="toggleRec()">🎤 Record</button>
+      <span id="recTime" style="font-size:13px;color:#94a3b8"></span>
+      <label>language
+        <select id="lang" style="width:auto">
+          <option value="hi-IN">hi-IN</option>
+          <option value="en-IN">en-IN</option>
+          <option value="bn-IN">bn-IN</option>
+        </select>
+      </label>
+    </div>
+    <div class="row">
+      <input type="file" id="file" accept=".wav,.mp3,.m4a,.flac,.ogg,.webm,.mp4,audio/*" style="color:#94a3b8;font-size:13px">
+      <button id="upBtn" onclick="uploadVoice()">Upload &amp; Ask</button>
+    </div>
+    <audio id="preview" controls style="display:none"></audio>
+    <p class="hint">Record with mic or upload a file. First STT call downloads the whisper model (~1 min).</p>
+    <div id="voiceOut"></div>
+  </div>
+</div>
+
+<script>
+const API = "";
+
+async function checkHealth() {
+  const el = document.getElementById("healthPill");
+  try {
+    const r = await fetch(API + "/health");
+    const j = await r.json();
+    el.textContent = j.index_loaded ? `● online · ${j.ntotal} vectors` : "● online · NO INDEX";
+    el.className = "pill " + (j.index_loaded ? "ok" : "bad");
+  } catch {
+    el.textContent = "● offline";
+    el.className = "pill bad";
+  }
+}
+checkHealth();
+
+function busy(btn, on, label) {
+  btn.disabled = on;
+  btn.innerHTML = on ? `<span class="spinner"></span>${label}` : label;
+}
+
+function render(out, j) {
+  const st = j.status || "error";
+  let html = `<span class="status-badge st-${st}">${st}</span>`;
+  if (j.stt && j.stt.text) html += `<div class="hint">heard: “${esc(j.stt.text)}” (${j.stt.provider_used})</div>`;
+  if (j.answer) html += `<div class="answer">${esc(j.answer)}</div>`;
+  const t = j.timings || {};
+  const chips = Object.entries(t).map(([k, v]) => `<span class="chip">${k}: ${v}ms</span>`).join("");
+  if (chips) html += `<div class="chips">${chips}<span class="chip">provider: ${j.provider || "-"}</span></div>`;
+  const chunks = j.retrieved || [];
+  if (chunks.length) {
+    html += `<details open><summary>retrieved chunks (${chunks.length})</summary>` +
+      chunks.map(c =>
+        `<div class="chunk"><span class="score">${(c.score ?? 0).toFixed(3)}</span> ` +
+        `<span class="strategy">${c.strategy || ""}</span><br>${esc((c.text || "").slice(0, 300))}…</div>`
+      ).join("") + `</details>`;
+  }
+  out.innerHTML = html;
+  if (j.answer && document.getElementById("speakToggle").checked) speakAnswer(j.answer);
+}
+
+async function speakAnswer(text) {
+  try {
+    const fd = new FormData();
+    fd.append("text", text);
+    const r = await fetch(API + "/speak", { method: "POST", body: fd });
+    if (!r.ok) return;
+    const url = URL.createObjectURL(await r.blob());
+    new Audio(url).play();
+  } catch {}
+}
+
+function errBox(out, msg) {
+  out.innerHTML = `<div class="err-box">⚠ ${esc(msg)}</div>`;
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+async function ask() {
+  const q = document.getElementById("q").value.trim();
+  const out = document.getElementById("textOut");
+  if (!q) return alert("Type a query first");
+  const btn = document.getElementById("askBtn");
+  busy(btn, true, "Thinking…");
+  out.innerHTML = "";
+  try {
+    const fd = new FormData();
+    fd.append("query", q);
+    fd.append("k", document.getElementById("k").value);
+    fd.append("rerank", document.getElementById("rerank").checked);
+    const r = await fetch(API + "/query", { method: "POST", body: fd });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    render(out, await r.json());
+  } catch (e) {
+    errBox(out, e.message);
+  } finally {
+    busy(btn, false, "Ask");
+  }
+}
+
+let media = null, chunks = [], t0 = null, timer = null;
+
+async function toggleRec() {
+  const btn = document.getElementById("recBtn");
+  if (!media) {
+    try {
+      media = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      return alert("Microphone permission denied");
+    }
+    chunks = [];
+    const rec = new MediaRecorder(media);
+    rec.ondataavailable = e => chunks.push(e.data);
+    rec.onstop = () => {
+      const blob = new Blob(chunks, { type: "audio/webm" });
+      const url = URL.createObjectURL(blob);
+      const pv = document.getElementById("preview");
+      pv.src = url; pv.style.display = "block";
+      pv._blob = blob;
+      media.getTracks().forEach(t => t.stop());
+      media = null;
+      btn.textContent = "🎤 Record";
+      btn.classList.remove("rec");
+      clearInterval(timer);
+    };
+    rec.start();
+    btn._rec = rec;
+    btn.textContent = "⏹ Stop";
+    btn.classList.add("rec");
+    t0 = Date.now();
+    timer = setInterval(() => {
+      document.getElementById("recTime").textContent = ((Date.now() - t0) / 1000).toFixed(1) + "s";
+    }, 100);
+  } else {
+    btn._rec.stop();
+  }
+}
+
+async function uploadVoice() {
+  const out = document.getElementById("voiceOut");
+  const pv = document.getElementById("preview");
+  const fileInput = document.getElementById("file");
+  let blob = pv._blob || (fileInput.files[0] ? fileInput.files[0] : null);
+  if (!blob) return alert("Record or choose an audio file first");
+  const btn = document.getElementById("upBtn");
+  busy(btn, true, "Transcribing…");
+  out.innerHTML = "";
+  try {
+    const fd = new FormData();
+    const name = pv._blob ? "mic.webm" : fileInput.files[0].name;
+    fd.append("file", blob, name);
+    fd.append("language_code", document.getElementById("lang").value);
+    fd.append("k", document.getElementById("k").value);
+    const r = await fetch(API + "/voice-query", { method: "POST", body: fd });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    render(out, await r.json());
+  } catch (e) {
+    errBox(out, e.message);
+  } finally {
+    busy(btn, false, "Upload & Ask");
+  }
+}
+</script>
+</body>
+</html>

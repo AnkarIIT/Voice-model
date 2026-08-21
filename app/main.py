@@ -1,0 +1,200 @@
+import logging
+import shutil
+import tempfile
+import threading
+import time
+from contextlib import suppress
+from pathlib import Path
+
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse, Response
+
+from .config import (
+    AUDIO_EXTENSIONS,
+    CORS_ORIGINS,
+    DEFAULT_K,
+    INDEX_DIR,
+    MAX_K,
+    MAX_UPLOAD_MB,
+    STT_PROVIDER,
+    WHISPER_DEVICE,
+    setup_logging,
+)
+from .embed import FaissIndex
+from .harness import atranscribe_with_harness
+from .orchestrator import run_pipeline
+
+setup_logging()
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Voice RAG - Full Harness", version="0.5.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+_INDEX = None
+_INDEX_LOCK = threading.Lock()
+
+
+def get_index() -> FaissIndex:
+    global _INDEX
+    if _INDEX is None:
+        with _INDEX_LOCK:
+            if _INDEX is None:
+                if not (INDEX_DIR / "faiss.index").exists():
+                    logger.error("index not found at %s; run build_index.py", INDEX_DIR)
+                    return None
+                _INDEX = FaissIndex.load(INDEX_DIR, device=WHISPER_DEVICE)
+    return _INDEX
+
+
+@app.on_event("startup")
+def warmup():
+    try:
+        idx = get_index()
+        if idx is not None:
+            logger.info("index ready: ntotal=%d", idx.index.ntotal)
+    except Exception as e:
+        logger.exception("index warmup failed: %s", e)
+
+
+def _clamp_k(k: int) -> int:
+    return max(1, min(int(k), MAX_K))
+
+
+async def _save_upload(file: UploadFile) -> Path:
+    suffix = Path(file.filename or "audio.wav").suffix.lower()
+    if suffix and suffix not in AUDIO_EXTENSIONS:
+        raise HTTPException(400, f"unsupported audio type {suffix!r}")
+    max_bytes = MAX_UPLOAD_MB * 1024 * 1024
+    tmp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix or ".wav") as tmp:
+            tmp_path = Path(tmp.name)
+            size = 0
+            while chunk := await file.read(1024 * 1024):
+                size += len(chunk)
+                if size > max_bytes:
+                    raise HTTPException(413, f"upload exceeds {MAX_UPLOAD_MB}MB limit")
+                tmp.write(chunk)
+        return tmp_path
+    except HTTPException:
+        if tmp_path:
+            with suppress(OSError):
+                tmp_path.unlink()
+        raise
+
+
+@app.get("/", include_in_schema=False)
+def home():
+    return FileResponse(Path(__file__).parent / "static" / "index.html")
+
+
+@app.get("/tester", include_in_schema=False)
+def tester():
+    return FileResponse(Path(__file__).parent / "static" / "tester.html")
+
+
+@app.post("/speak")
+def speak(text: str = Form(...)):
+    import io
+
+    clean = text.strip()[:1000]
+    if not clean:
+        raise HTTPException(400, "empty text")
+    lang = "hi" if any("\u0900" <= ch <= "\u097F" for ch in clean) else "en"
+    try:
+        from gtts import gTTS
+
+        buf = io.BytesIO()
+        gTTS(text=clean, lang=lang).write_to_fp(buf)
+    except Exception as e:
+        logger.warning("TTS failed: %s", e)
+        raise HTTPException(502, "text-to-speech failed upstream")
+    buf.seek(0)
+    return Response(content=buf.read(), media_type="audio/mpeg")
+
+
+@app.get("/health")
+def health():
+    loaded = _INDEX is not None
+    return {
+        "status": "ok",
+        "provider": STT_PROVIDER,
+        "index_loaded": loaded,
+        "index_available": (INDEX_DIR / "faiss.index").exists(),
+        "ntotal": _INDEX.index.ntotal if loaded else 0,
+    }
+
+
+@app.post("/transcribe")
+async def transcribe(
+    file: UploadFile = File(...),
+    language_code: str = Form("hi-IN"),
+    provider: str = Form(None),
+):
+    prov = provider or STT_PROVIDER
+    tmp_path = await _save_upload(file)
+    try:
+        t0 = time.perf_counter()
+        result = await atranscribe_with_harness(tmp_path, language_code, prov)
+        result["endpoint_latency_ms"] = round((time.perf_counter() - t0) * 1000, 2)
+        result["filename"] = file.filename
+        if result["status"] == "error":
+            logger.error("transcription failed: %s", result.get("error"))
+            raise HTTPException(502, "transcription failed upstream")
+        return JSONResponse(result)
+    finally:
+        with suppress(OSError):
+            tmp_path.unlink()
+
+
+@app.post("/query")
+def query_text(
+    query: str = Form(...),
+    k: int = Form(DEFAULT_K),
+    rerank: bool = Form(False),
+):
+    idx = get_index()
+    if idx is None:
+        raise HTTPException(503, "Index not built. Run build_index.py first.")
+    out = run_pipeline(
+        query_text=query,
+        index=idx,
+        k=_clamp_k(k),
+        use_rerank=bool(rerank),
+    )
+    return JSONResponse(out)
+
+
+@app.post("/voice-query")
+async def voice_query(
+    file: UploadFile = File(...),
+    language_code: str = Form("hi-IN"),
+    k: int = Form(DEFAULT_K),
+):
+    idx = get_index()
+    if idx is None:
+        raise HTTPException(503, "Index not built. Run build_index.py first.")
+    tmp_path = await _save_upload(file)
+    try:
+        out = await run_pipeline_async(
+            audio_path=tmp_path,
+            language_code=language_code,
+            index=idx,
+            k=_clamp_k(k),
+        )
+        return JSONResponse(out)
+    finally:
+        with suppress(OSError):
+            tmp_path.unlink()
+
+
+async def run_pipeline_async(**kwargs):
+    import asyncio
+
+    return await asyncio.to_thread(run_pipeline, **kwargs)
