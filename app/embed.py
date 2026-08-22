@@ -113,5 +113,18 @@ class FaissIndex:
         obj.index = faiss.read_index(str(Path(path) / "faiss.index"))
         obj.index, obj.gpu = _to_gpu(obj.index)
         obj.meta = meta
+        if not meta_path.exists():
+            try:
+                payload = {
+                    "model_name": model_name,
+                    "dim": obj.dim,
+                    "ntotal": int(obj.index.ntotal),
+                    "meta": meta,
+                }
+                with open(meta_path, "w", encoding="utf-8") as f:
+                    json.dump(payload, f, ensure_ascii=False)
+                logger.info("migrated legacy metadata to %s", meta_path)
+            except (OSError, TypeError) as e:
+                logger.warning("could not migrate legacy meta to json: %s", e)
         logger.info("loaded index ntotal=%d gpu=%s from %s", obj.index.ntotal, obj.gpu, path)
         return obj

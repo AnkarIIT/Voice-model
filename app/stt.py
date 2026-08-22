@@ -223,22 +223,35 @@ class LocalWhisperSTT:
                     vad_parameters={"min_silence_duration_ms": 300},
                     condition_on_previous_text=False,
                 )
-                text = " ".join(s.text for s in segments).strip()
+                kept, logprobs = [], []
+                for s in segments:
+                    # drop likely hallucinations: silent audio w/ low model confidence
+                    if s.no_speech_prob > 0.6 and s.avg_logprob < -1.0:
+                        continue
+                    kept.append(s.text)
+                    logprobs.append(s.avg_logprob)
+                text = " ".join(kept).strip()
                 detected = info.language
             else:
                 result = self._model.transcribe(str(processed), language=lang)
-                text = result["text"].strip()
+                segs = [
+                    s for s in result.get("segments", [])
+                    if not (s.get("no_speech_prob", 0) > 0.6 and s.get("avg_logprob", 0) < -1.0)
+                ]
+                text = "".join(s.get("text", "") for s in segs).strip() or result["text"].strip()
                 detected = result.get("language", lang)
+                logprobs = [s.get("avg_logprob") for s in segs if s.get("avg_logprob") is not None]
         finally:
             if processed != audio_path:
                 try:
                     processed.unlink(missing_ok=True)
                 except OSError:
                     pass
+        confidence = round(sum(logprobs) / len(logprobs), 2) if logprobs else None
         return STTResult(
             text=text,
             language=detected,
-            confidence=None,
+            confidence=confidence,
             provider=f"local-{self.backend}",
             latency_ms=(time.perf_counter() - t0) * 1000,
             raw={},

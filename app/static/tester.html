@@ -395,6 +395,7 @@ footer .sig{font-weight:700;letter-spacing:2px;color:var(--green-dark)}
       <div class="sysrow"><span class="k">EMBEDDING</span><span class="v">MULTILINGUAL-MiniLM · <em>384-D</em></span></div>
       <div class="sysrow"><span class="k">LLM</span><span class="v">GEMINI FLASH</span></div>
       <div class="sysrow"><span class="k">INDEX</span><span class="v" id="sysIndex">— PASSAGES</span></div>
+      <div class="sysrow"><span class="k">BENCH (50 Q)</span><span class="v" id="sysBench">—</span></div>
       <div class="sysrow"><span class="k">LANGUAGES</span><span class="v">HI · EN · BN</span></div>
       <div class="sysrow"><span class="k">STATUS</span><span class="v" id="sysStatus">● …</span></div>
       <div class="sysrow"><span class="k">BADDIE DETECTORS</span><span class="v" id="sysBaddies">0</span></div>
@@ -449,6 +450,18 @@ async function checkHealth() {
 }
 checkHealth();
 loadHistory();
+
+(async function loadBench(){
+  try {
+    const r = await fetch(API + "/bench");
+    if (!r.ok) return;
+    const j = await r.json();
+    if (!j.available) { $("sysBench").textContent = "N/A"; return; }
+    const s = (j.summary && (j.summary.retrieval_llm_ms || j.summary.total_ms)) || null;
+    if (!s) { $("sysBench").textContent = "N/A"; return; }
+    $("sysBench").innerHTML = `<em>P50 ${Math.round(s.p50)}ms</em> · P100 ${Math.round(s.p100)}ms`;
+  } catch {}
+})();
 
 let SESSION_ID = localStorage.getItem("rag_session_id") || (() => {
   const id = "sess_" + Math.random().toString(36).slice(2, 10);

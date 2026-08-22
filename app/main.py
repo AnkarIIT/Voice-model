@@ -18,14 +18,20 @@ from .config import (
     BASE_DIR,
     CORS_ORIGINS,
     DEFAULT_K,
+    ELEVENLABS_API_KEY,
+    GEMINI_API_KEY,
     INDEX_DIR,
+    LLM_MODEL,
     MAX_K,
     MAX_UPLOAD_MB,
+    OPENAI_API_KEY,
+    SARVAM_API_KEY,
     STT_PROVIDER,
     TTS_MODEL,
     TTS_SPEAKER_EN,
     TTS_SPEAKER_HI,
     WHISPER_DEVICE,
+    WHISPER_MODEL,
     setup_logging,
 )
 from .embed import FaissIndex
@@ -103,12 +109,24 @@ def _clamp_k(k: int) -> int:
 
 def health_payload():
     loaded = _INDEX is not None
+    providers = {
+        "stt_sarvam": {"configured": bool(SARVAM_API_KEY), "primary": STT_PROVIDER == "sarvam"},
+        "stt_whisper_fallback": {"model": WHISPER_MODEL, "device": WHISPER_DEVICE},
+        "stt_elevenlabs": {"configured": bool(ELEVENLABS_API_KEY)},
+        "llm_gemini": {"configured": bool(GEMINI_API_KEY), "model": LLM_MODEL},
+        "llm_openai": {"configured": bool(OPENAI_API_KEY)},
+        "tts_sarvam": {"configured": bool(SARVAM_API_KEY), "model": TTS_MODEL},
+        "tts_gtts_fallback": True,
+    }
+    llm_ready = bool(GEMINI_API_KEY or OPENAI_API_KEY)
     return {
-        "status": "ok",
+        "status": "ok" if (loaded and llm_ready) else "degraded",
         "provider": STT_PROVIDER,
         "index_loaded": loaded,
         "index_available": (INDEX_DIR / "faiss.index").exists(),
         "ntotal": _INDEX.index.ntotal if loaded else 0,
+        "llm_ready": llm_ready,
+        "providers": providers,
         "baddie_detectors": _BADDIE_COUNT,
     }
 
