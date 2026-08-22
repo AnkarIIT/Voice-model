@@ -347,8 +347,24 @@ async def query_stream(
                 yield _sse("token", {"text": chunk})
             from .guardrails import answer_draws_on_history, hallucination_check
 
+            # Convert raw LLM refusal into a friendly user-facing message.
+            _REFUSAL_PHRASES = {
+                "no reliable answer found in context.",
+                "no reliable answer found in retrieved context.",
+            }
+            if full.strip().lower() in _REFUSAL_PHRASES:
+                q = (query or "").strip()
+                if any("\u0900" <= ch <= "\u097F" for ch in q):
+                    full = "मुझे इस सवाल का जवाब knowledge base में नहीं मिला। कृपया दूसरे शब्दों में पूछें।"
+                elif any("\u0980" <= ch <= "\u09FF" for ch in q):
+                    full = "আমি knowledge base-এ এই প্রশ্নের উত্তর পাইনি। অন্য শব্দে পুনরায় জিজ্ঞাসা করুন।"
+                else:
+                    full = "I couldn't find specific information about this in my knowledge base. Try rephrasing or asking about topics like company policy, procedures, or services covered in the docs."
+
             h = hallucination_check(full, chunks, encoder=getattr(idx, "model", None))
-            if not h.get("grounded") and answer_draws_on_history(full, history):
+            if full.strip().lower() in _REFUSAL_PHRASES:
+                h = {**h, "grounded": True, "method": "refusal_converted"}
+            elif not h.get("grounded") and answer_draws_on_history(full, history):
                 h = {**h, "grounded": True, "method": "history_follow_up"}
             total = (time.perf_counter() - t0) * 1000
             llm_ms = (time.perf_counter() - llm_t0) * 1000
@@ -360,7 +376,7 @@ async def query_stream(
                 "retrieved": chunks,
                 "retrieval": {"search_ms": ret["search_ms"], "total_ms": ret["total_ms"], "reranked": ret["reranked"]},
                 "answer": full,
-                "guardrail": g,
+                "guardrail": {"action": "allow", "reason": "ok" if h.get("grounded") else "no_answer", "answer": None},
                 "hallucination": h,
                 "provider": prov,
                 "timings": {"retrieval_ms": round(ret["total_ms"], 2), "llm_ms": round(llm_ms, 2), "total_ms": round(total, 2)},
