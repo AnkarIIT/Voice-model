@@ -5,9 +5,9 @@ __pycache__/
 .pytest_cache/
 
 data/
-index_hinval/
 index_*/
-bench_results.json
+!index_hinval/
+index_hinval/meta.pkl
 
 ffmpeg.exe
 ffprobe.exe

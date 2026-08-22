@@ -1,0 +1,471 @@
+{
+  "summary": {
+    "model": "gemini-3.5-flash-lite",
+    "queries": 50,
+    "retrieval_llm_ms": {
+      "p50": 713.09,
+      "p70": 802.69,
+      "p100": 2689.91,
+      "mean": 586.72
+    },
+    "total_ms": {
+      "p50": 713.2,
+      "p70": 802.83,
+      "p100": 2690.08,
+      "mean": 586.85
+    },
+    "note": "Gemini free tier: ~15 req/min. Fallback to extractive if quota exceeded."
+  },
+  "results": [
+    {
+      "query": ". what is a corporation?",
+      "total_ms": 2690.0760999997146,
+      "retrieval_llm_ms": 2689.91,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "\u0935\u094d\u092f\u0915\u094d\u0924\u093f\u092f\u094b\u0902 \u0915\u093e \u090f\u0915 \u0938\u092e\u0942\u0939, \u091c\u094b \u0915\u093e\u0928\u0942\u0928 \u0926\u094d\u0935\u093e\u0930\u093e \u092f\u093e \u0915\u093e\u0928\u0942\u0928 \u0915\u0947 \u0905\u0927\u093f\u0915\u093e\u0930 \u0915\u0947 \u0924\u0939\u0924 \u092c\u0928\u093e\u092f\u093e \u0917\u092f\u093e \u0939\u0948, \u091c\u093f\u0938\u0915\u093e \u090f\u0915 \u0928\u093f\u0930\u0902\u0924\u0930 \u0905\u0938\u094d\u0924\u093f\u0924\u094d\u0935 \u0939\u0948 \u091c\u094b \u0907\u0938\u0915\u0947 \u0938\u0926\u0938\u094d\u092f"
+    },
+    {
+      "query": "why did rachel carson write an obligation to endure",
+      "total_ms": 927.764499998375,
+      "retrieval_llm_ms": 927.65,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "chart for foods low in potassium.",
+      "total_ms": 821.6334999997343,
+      "retrieval_llm_ms": 821.53,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "\u0928\u093f\u092e\u094d\u0928 \u0938\u094b\u0921\u093f\u092f\u092e \u0928\u093f\u092e\u094d\u0928 \u092a\u094b\u091f\u0947\u0936\u093f\u092f\u092e \u0916\u093e\u0926\u094d\u092f \u092a\u0926\u093e\u0930\u094d\u0925\u094b\u0902 \u0915\u0940 \u0938\u0942\u091a\u0940\u0964"
+    },
+    {
+      "query": "bottom front of a cargo ship",
+      "total_ms": 903.8884000001417,
+      "retrieval_llm_ms": 903.73,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "honesty or integrity definition",
+      "total_ms": 727.1078000012494,
+      "retrieval_llm_ms": 727.03,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "\u0908\u092e\u093e\u0928\u0926\u093e\u0930 \u0939\u094b\u0928\u0947 \u0915\u0940 \u0917\u0941\u0923\u0935\u0924\u094d\u0924\u093e: \u0938\u092e\u094d\u092e\u093e\u0928, \u0938\u092e\u094d\u092e\u093e\u0928\u091c\u0928\u0915\u0924\u093e, \u092d\u094d\u0930\u0937\u094d\u091f\u093e\u091a\u093e\u0930\u0930\u0939\u093f\u0924\u0924\u093e, \u0905\u0916\u0902\u0921\u0924\u093e, \u0926\u0943\u0922\u093c\u0924\u093e\u0964"
+    },
+    {
+      "query": "what is barometric pressure in lincoln ne now?",
+      "total_ms": 831.737599999542,
+      "retrieval_llm_ms": 831.63,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "struthers city school district state number",
+      "total_ms": 763.3459000007861,
+      "retrieval_llm_ms": 763.22,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "does medical marijuana help with ptsd",
+      "total_ms": 920.2944000007847,
+      "retrieval_llm_ms": 920.22,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "how many women did frank gifford marry",
+      "total_ms": 1017.7514999995765,
+      "retrieval_llm_ms": 1017.66,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "Three (fraank ki teesri shaadi)"
+    },
+    {
+      "query": "how many ongoing trump administration investigations",
+      "total_ms": 912.4004000004788,
+      "retrieval_llm_ms": 912.28,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "\u0924\u0940\u0928 (Three)"
+    },
+    {
+      "query": "guide to how to collect followers on wow",
+      "total_ms": 817.5790000004781,
+      "retrieval_llm_ms": 817.49,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "\u0905\u0924\u093f\u0930\u093f\u0915\u094d\u0924 \u0905\u0928\u0941\u092f\u093e\u092f\u0940 \u092a\u094d\u0930\u093e\u092a\u094d\u0924 \u0915\u0930\u0928\u0947 \u0915\u0947 \u0932\u093f\u090f, \u0905\u0915\u094d\u091c\u093e\u0928\u093e \u092f\u093e \u0932\u093f\u0938\u093e \u0938\u0947 \u092c\u093e\u0924 \u0915\u0930\u0947\u0902, \u0914\u0930 \u090f\u0915 \u0935\u093f\u0936\u0947\u0937\u0924\u093e \u091a\u0941\u0928\u0947\u0902 \u091c\u093f\u0938\u0947 \u0906\u092a \u091a\u093e\u0939\u0924\u0947 \u0939\u0948\u0902 \u0915\u093f \u0906\u092a\u0915\u093e \u0905\u0928\u0941\u092f\u093e\u092f\u0940"
+    },
+    {
+      "query": "how long is zales layaway",
+      "total_ms": 732.000900001367,
+      "retrieval_llm_ms": 731.92,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "how does pollution increase human population",
+      "total_ms": 715.6209999993735,
+      "retrieval_llm_ms": 715.54,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "how does nhl playoff seeding work",
+      "total_ms": 711.7471000001387,
+      "retrieval_llm_ms": 711.64,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "does filth cause ringworm?",
+      "total_ms": 819.3059999994148,
+      "retrieval_llm_ms": 819.2,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "how much does it cost to recement a crown",
+      "total_ms": 694.0381000003981,
+      "retrieval_llm_ms": 693.89,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "what is barrel o slime?",
+      "total_ms": 737.6614000004338,
+      "retrieval_llm_ms": 737.54,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "how fast does an eagle travel",
+      "total_ms": 204.9193999991985,
+      "retrieval_llm_ms": 204.76,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "[NUMERIC|hin_Deva|doc:233826_0] \u0924\u094d\u0935\u0930\u093f\u0924 \u0909\u0924\u094d\u0924\u0930: \u0908\u0917\u0932 30 \u0938\u0947 55 \u092e\u0940\u0932 \u092a\u094d\u0930\u0924\u093f \u0918\u0902\u091f\u0947 \u0915\u0940 \u0930\u092b\u094d\u0924\u093e\u0930 \u0938\u0947 \u0909\u0921\u093c\u0924\u0947 \u0939\u0948\u0902 \u0914\u0930 100 \u092e\u0940\u0932 \u092a\u094d\u0930\u0924\u093f \u0918\u0902\u091f\u0947 \u0938"
+    },
+    {
+      "query": "stubhub toll free number",
+      "total_ms": 218.36660000008123,
+      "retrieval_llm_ms": 218.26,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "\u091f\u094b\u0932 \u092b\u094d\u0930\u0940 1 800 \u0928\u0902\u092c\u0930\u0964"
+    },
+    {
+      "query": "how many kw do solar city panels produce",
+      "total_ms": 346.6201999999612,
+      "retrieval_llm_ms": 346.46,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "[NUMERIC|hin_Deva|doc:287284_3] \u092a\u094d\u0930\u0924\u094d\u092f\u0947\u0915 \u0938\u094c\u0930 \u0938\u0930\u0923\u0940 \u0915\u0940 \u090f\u0915 \u0935\u093f\u0936\u093f\u0937\u094d\u091f \u0930\u0947\u091f\u093f\u0902\u0917 \u0939\u094b\u0924\u0940 \u0939\u0948\u0964 \u0915\u0941\u091b 50 \u0921\u092c\u094d\u0932\u094d\u092f\u0942, 80 \u0921\u092c\u094d\u0932\u094d\u092f\u0942 \u092f\u093e 120 \u0921\u092c\u094d\u0932\u094d\u092f"
+    },
+    {
+      "query": "first defense nasal filter sales numbers",
+      "total_ms": 200.90739999977814,
+      "retrieval_llm_ms": 200.72,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "[NUMERIC|hin_Deva|doc:187378_0] \u092a\u094d\u0930\u0925\u092e \u0930\u0915\u094d\u0937\u093e \u0928\u093e\u0915 \u0915\u0940 \u0938\u094d\u0915\u094d\u0930\u0940\u0928 \u0915\u094b \u0938\u092d\u0940 \u092a\u094d\u0930\u0915\u093e\u0930 \u0915\u0947 \u0935\u093e\u0924\u093e\u0935\u0930\u0923 \u092e\u0947\u0902 \u0938\u093e\u0901\u0938 \u0932\u0947\u0928\u0947 \u0935\u093e\u0932\u0947 \u092a\u094d\u0930\u0926\u0942\u0937\u0915\u094b\u0902 \u0915\u0940 \u092e\u093e\u0924\u094d"
+    },
+    {
+      "query": "how to get clear desktop icon on windows 8",
+      "total_ms": 220.09549999893352,
+      "retrieval_llm_ms": 219.97,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "[DESCRIPTION|hin_Deva|doc:81995_5] 1"
+    },
+    {
+      "query": "does delta fly to bangalore",
+      "total_ms": 350.9321000001364,
+      "retrieval_llm_ms": 350.69,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "\u0921\u0947\u0932\u094d\u091f\u093e \u0921\u0947\u0932\u094d\u091f\u093e \u0938\u0939\u093e\u092f\u0915 \u0915\u0902\u092a\u0928\u0940 \u0928\u0949\u0930\u094d\u0925\u0935\u0947\u0938\u094d\u091f \u090f\u092f\u0930\u0932\u093e\u0907\u0902\u0938 \u0915\u0947 \u092e\u093e\u0927\u094d\u092f\u092e \u0938\u0947 \u090f\u092e\u094d\u0938\u094d\u091f\u0930\u094d\u0921\u092e \u0938\u0947 \u0939\u094b\u0915\u0930 \u0914\u0930 \u0921\u0947\u0932\u094d\u091f\u093e \u0915\u0940 \u0938\u0939\u092f\u094b\u0917\u0940 \u090f\u092f\u0930 \u092b\u094d\u0930\u093e\u0902\u0938 \u0915\u0947 \u092e\u093e\u0927\u094d\u092f\u092e \u0938"
+    },
+    {
+      "query": "how long for cantaloupe to mature",
+      "total_ms": 226.7045999997208,
+      "retrieval_llm_ms": 226.56,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "[NUMERIC|hin_Deva|doc:260880_6] \u0916\u0940\u0930\u0947 \u0906\u092e \u0924\u094c\u0930 \u092a\u0930 75-90 \u0926\u093f\u0928\u094b\u0902 \u0915\u0947 \u092c\u0940\u091a \u092a\u0930\u093f\u092a\u0915\u094d\u0935\u0924\u093e \u092a\u094d\u0930\u093e\u092a\u094d\u0924 \u0915\u0930\u0924\u0947 \u0939\u0948\u0902\u0964 \u0905\u0927\u093f\u0915\u093e\u0902\u0936 \u0916\u0940\u0930\u0947 \u0915\u0940 \u0915\u093f\u0938\u094d\u092e\u0947\u0902 \u091a\u0930"
+    },
+    {
+      "query": "cost to replace converter with test pipe",
+      "total_ms": 209.5236000004661,
+      "retrieval_llm_ms": 209.4,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "\u0938\u0940\u0927\u0947 \u092a\u0930\u0940\u0915\u094d\u0937\u0923 \u092a\u093e\u0907\u092a \u0938\u0947 \u0905\u092a\u0928\u0947 \u0909\u0924\u094d\u092a\u094d\u0930\u0947\u0930\u0915 \u092a\u0930\u093f\u0935\u0930\u094d\u0924\u0915 \u0915\u094b \u092c\u0926\u0932\u0947\u0902\u0964"
+    },
+    {
+      "query": "defination arbitrary",
+      "total_ms": 350.493899999492,
+      "retrieval_llm_ms": 350.36,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "\u0905\u0938\u094d\u0935\u0940\u0915\u0930\u0923: \u092f\u0947 \u0926\u093f\u0936\u093e\u0928\u093f\u0930\u094d\u0926\u0947\u0936 \u0917\u0923\u0928\u093e\u090f\u0901 \u0939\u0948\u0902 \u0914\u0930 \u0938\u0902\u0915\u094d\u0937\u093f\u092a\u094d\u0924\u0924\u093e \u0915\u0947 \u0915\u093e\u0930\u0923 \u0938\u092e\u093e\u092f\u094b\u091c\u093f\u0924 \u0915\u0930\u0928\u0947 \u0915\u0940 \u0906\u0935\u0936\u094d\u092f\u0915\u0924\u093e \u0939\u094b \u0938\u0915\u0924\u0940 \u0939\u0948\u0964"
+    },
+    {
+      "query": "how is time to degree calculated graduate degrees",
+      "total_ms": 197.8491000008944,
+      "retrieval_llm_ms": 197.69,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "\u092a\u0939\u0932\u0947, \u0906\u092a \u0905\u092a\u0928\u0940 \u0938\u094d\u0928\u093e\u0924\u0915 \u0915\u0940 \u0921\u093f\u0917\u094d\u0930\u0940 \u092a\u094d\u0930\u093e\u092a\u094d\u0924 \u0915\u0930 \u0938\u0915\u0924\u0947 \u0939\u0948\u0902, \u091c\u093f\u0938\u092e\u0947\u0902 \u0906\u092e \u0924\u094c\u0930 \u092a\u0930 \u0926\u094b \u0905\u0924\u093f\u0930\u093f\u0915\u094d\u0924 \u0935\u0930\u094d\u0937 \u0932\u0917\u0924\u0947 \u0939\u0948\u0902, \u0914\u0930 \u092b\u093f\u0930 \u0905\u092a\u0928\u0947 \u0915\u093e\u0930\u094d\u092f\u0915\u094d\u0930\u092e \u092e\u0947"
+    },
+    {
+      "query": "what is barter system and its problems",
+      "total_ms": 213.16489999844634,
+      "retrieval_llm_ms": 213.0,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "[DESCRIPTION|hin_Deva|doc:1060361_9] \u0938\u0930\u094d\u0935\u094b\u0924\u094d\u0924\u092e \u0909\u0924\u094d\u0924\u0930\u0903 \u0905\u0930\u094d\u0925\u0936\u093e\u0938\u094d\u0924\u094d\u0930 \u092e\u0947\u0902 \u092c\u093e\u0930\u094d\u091f\u0930 \u092a\u094d\u0930\u0923\u093e\u0932\u0940 \u0915\u0940 \u0938\u092c\u0938\u0947 \u092c\u0921\u093c\u0940 \u0938\u092e\u0938\u094d\u092f\u093e \u092f\u0939 \u0939\u0948 \u0915\u093f \u0906\u0926\u093f\u092e \u092c"
+    },
+    {
+      "query": "did roblox have a power ranger event",
+      "total_ms": 334.1301000000385,
+      "retrieval_llm_ms": 333.97,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "[DESCRIPTION|hin_Deva|doc:144943_2] \u0939\u093e\u0932\u093e\u0901\u0915\u093f, \u091f\u0940\u092e \u0905\u092a \u0915\u0947 \u090f\u092a\u093f\u0938\u094b\u0921 \u0924\u092c \u0924\u0915 \u090f\u0915 \u0906\u092e \u092c\u093e\u0924 \u0928\u0939\u0940\u0902 \u092c\u0928\u0947 \u091c\u092c \u0924\u0915 \u0915\u093f 1999 \u0915\u0940 \u092a\u093e\u0935\u0930 \u0930\u0947\u0902\u091c\u0930\u094d\u0938 \u0932\u0949\u0938"
+    },
+    {
+      "query": "study of climate weather",
+      "total_ms": 198.9718000004359,
+      "retrieval_llm_ms": 198.87,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "[DESCRIPTION|hin_Deva|doc:1090353_0] \u092e\u094c\u0938\u092e \u0914\u0930 \u091c\u0932\u0935\u093e\u092f\u0941 \u0915\u0947 \u0905\u0927\u094d\u092f\u092f\u0928 \u0915\u094b \u092e\u094c\u0938\u092e \u0935\u093f\u091c\u094d\u091e\u093e\u0928 \u0915\u0939\u093e \u091c\u093e\u0924\u093e \u0939\u0948\u0964"
+    },
+    {
+      "query": "how to make an oil infused herbal infusion",
+      "total_ms": 217.7674999984447,
+      "retrieval_llm_ms": 217.67,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "\u0909\u092c\u093e\u0932 \u0932\u0947\u0902 \u0914\u0930 \u0907\u0938\u092e\u0947\u0902 \u0938\u094b\u092f\u093e \u0938\u0949\u0938, \u0938\u093e\u0915\u0947, \u0928\u092e\u0915 \u0914\u0930 \u0924\u093f\u0932 \u0915\u093e \u0924\u0947\u0932 \u0921\u093e\u0932\u0947\u0902\u0964"
+    },
+    {
+      "query": "culture of sociology definition",
+      "total_ms": 338.7075000009645,
+      "retrieval_llm_ms": 338.55,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "\u090f\u0915 \u0909\u092a\u0938\u0902\u0938\u094d\u0915\u0943\u0924\u093f \u090f\u0915 \u0935\u094d\u092f\u093e\u092a\u0915 \u092e\u0941\u0916\u094d\u092f\u0927\u093e\u0930\u093e \u0938\u0902\u0938\u094d\u0915\u0943\u0924\u093f \u0915\u0947 \u092d\u0940\u0924\u0930 \u090f\u0915 \u0938\u0902\u0938\u094d\u0915\u0943\u0924\u093f \u0939\u0948, \u091c\u093f\u0938\u0915\u0947 \u0905\u092a\u0928\u0947 \u0905\u0932\u0917-\u0905\u0932\u0917 \u092e\u0942\u0932\u094d\u092f\u094b\u0902, \u092a\u094d\u0930\u0925\u093e\u0913\u0902 \u0914\u0930 \u092e\u093e\u0928\u094d\u092f\u0924\u093e\u0913\u0902 \u0939\u0948\u0902\u0964"
+    },
+    {
+      "query": "define radical neck",
+      "total_ms": 207.36519999991287,
+      "retrieval_llm_ms": 207.2,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "[DESCRIPTION|hin_Deva|doc:126172_8] \u090f\u0915 \u0930\u0942\u0922\u093c\u093f\u0935\u093e\u0926\u0940 \u0917\u0930\u094d\u0926\u0928 \u0935\u093f\u091a\u094d\u091b\u0947\u0926\u0928 \u092c\u0938 \u0907\u0924\u0928\u093e \u0939\u0948: \u0917\u0930\u094d\u0926\u0928 \u0915\u093e \u090f\u0915 \u0930\u0942\u0922\u093c\u093f\u0935\u093e\u0926\u0940 \u0935\u093f\u091a\u094d\u091b\u0947\u0926\u0928 \u091c\u094b \u090f\u0915 \u092a\u094d\u0930\u092e\u0941\u0916 "
+    },
+    {
+      "query": "half cup how many ounces",
+      "total_ms": 192.49630000012985,
+      "retrieval_llm_ms": 192.15,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "[NUMERIC|hin_Deva|doc:198064_4] \u0907\u0902\u092a\u0940\u0930\u093f\u092f\u0932 \u092a\u093f\u0902\u091f 20 \u0914\u0902\u0938 - \u0922\u093e\u0908 \u0915\u092a \u0939\u094b\u0924\u093e \u0939\u0948\u0964 \u0909\u0938\u0938\u0947 \u091a\u094c\u0925\u093e\u0908 2 \u092a\u093f\u0902\u091f = 5 \u0915\u092a = 40 \u0914\u0902\u0938 \u0939\u094b\u0924\u093e \u0939\u0948, \u0917\u0948\u0932\u0928 4"
+    },
+    {
+      "query": "define workday",
+      "total_ms": 339.93569999984175,
+      "retrieval_llm_ms": 339.79,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "\u092e\u0941\u091d\u0947 \u0915\u093e\u092e \u0915\u0930\u0928\u0947 \u0915\u0947 \u0932\u093f\u090f \u091b\u0941\u091f\u094d\u091f\u0940 \u0932\u0947\u0928\u0940 \u092a\u0921\u093c\u0924\u0940 \u0939\u0948 (\u0926\u093f\u0928 \u092e\u0947\u0902 \u0915\u093e\u092e \u0915\u0930\u0928\u093e \u0914\u0930 \u0930\u093e\u0924 \u092e\u0947\u0902 \u091b\u0941\u091f\u094d\u091f\u0940 \u0932\u0947\u0928\u093e)\u0964"
+    },
+    {
+      "query": "how much xbox games cost",
+      "total_ms": 213.42720000029658,
+      "retrieval_llm_ms": 213.25,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "[NUMERIC|hin_Deva|doc:331047_1] \u092e\u093e\u0902\u0917 \u092a\u0930 \u0916\u0947\u0932 \u0936\u0940\u0930\u094d\u0937\u0915 \u0915\u0940 \u0915\u0940\u092e\u0924 \u0915\u093f\u0924\u0928\u0940 \u0939\u0948? \u090f\u0915\u094d\u0938\u092c\u0949\u0915\u094d\u0938 360 \u092e\u093e\u0902\u0917 \u092a\u0930 \u0916\u0947\u0932 \u0936\u0940\u0930\u094d\u0937\u0915 \u0915\u0947\u0935\u0932 \u0915\u0941\u091b \u0921\u0949\u0932\u0930 \u0938\u0947 \u0932"
+    },
+    {
+      "query": "can a signed stipulation be overturned",
+      "total_ms": 205.86329999969166,
+      "retrieval_llm_ms": 205.75,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "(3) \u0938\u092e\u091d\u094c\u0924\u0947 \u0915\u0947 \u0905\u0902\u0924 \u092e\u0947\u0902 \u0938\u092e\u091d\u094c\u0924\u0947 \u0915\u094b \u0938\u092e\u093e\u092a\u094d\u0924 \u0915\u0930\u0928\u0947 \u0915\u0947 \u0932\u093f\u090f \u090f\u0915 \u0930\u0926\u094d\u0926\u0940\u0915\u0930\u0923 \u0928\u094b\u091f\u093f\u0938\u0964"
+    },
+    {
+      "query": "can stress crack on glass pane be remedied",
+      "total_ms": 326.2661000007938,
+      "retrieval_llm_ms": 326.15,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "\u092f\u0926\u093f \u0924\u0928\u093e\u0935 \u092c\u0939\u0941\u0924 \u0905\u0927\u093f\u0915 \u0939\u094b \u0924\u094b \u0915\u093e\u0902\u091a \u0926\u0930\u093e\u0930 \u0915\u0930 \u091c\u093e\u090f\u0917\u093e\u0964 \u0915\u093e\u0902\u091a \u0915\u0947 \u091f\u0942\u091f\u0928\u0947 \u0915\u0947 \u0938\u094d\u0924\u0930 \u0915\u094b \u0915\u0908 \u0915\u093e\u0930\u0915\u094b\u0902 \u0926\u094d\u0935\u093e\u0930\u093e \u0928\u093f\u092f\u0902\u0924\u094d\u0930\u093f\u0924 \u0915\u093f\u092f\u093e \u091c\u093e\u0924\u093e \u0939\u0948\u0964"
+    },
+    {
+      "query": "what is basal in dna",
+      "total_ms": 197.83730000017385,
+      "retrieval_llm_ms": 197.72,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "[DESCRIPTION|hin_Deva|doc:140746_7] \u0938\u093f\u0917\u094d\u092e\u093e \u092a\u093e\u0908 - \u0921\u0947\u0932\u094d\u091f\u093e \u0906\u092f\u094b\u091f\u093e\u0964"
+    },
+    {
+      "query": "how effective is boniva",
+      "total_ms": 713.1962000003114,
+      "retrieval_llm_ms": 713.09,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "how long should you carb cycle",
+      "total_ms": 805.5356999993819,
+      "retrieval_llm_ms": 805.43,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "Based on the provided context, you should carb cycle between two to eight weeks, depending on the fat in your body."
+    },
+    {
+      "query": "sty causes",
+      "total_ms": 220.60090000013588,
+      "retrieval_llm_ms": 220.5,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "extractive-fallback",
+      "answer": "\u0938\u093f\u0902\u0921\u094d\u0930\u094b\u092e) \u0915\u093e \u0915\u093e\u0930\u0923 \u092c\u0928\u0924\u0947 \u0939\u0948\u0902\u0964"
+    },
+    {
+      "query": "highest record temperature for redding ca",
+      "total_ms": 802.8253000011318,
+      "retrieval_llm_ms": 802.69,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "118 degrees Fahrenheit (118 \u0921\u093f\u0917\u094d\u0930\u0940 \u092b\u093e\u0930\u0947\u0928\u0939\u093e\u0907\u091f)"
+    },
+    {
+      "query": "court of two sisters brunch price",
+      "total_ms": 713.3446999996522,
+      "retrieval_llm_ms": 713.27,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "how much does matt lauer make a year",
+      "total_ms": 811.3572999991447,
+      "retrieval_llm_ms": 811.27,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "california domestic violence leave laws",
+      "total_ms": 784.0960999983508,
+      "retrieval_llm_ms": 784.0,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "how to print an excel sheet",
+      "total_ms": 816.7577999993227,
+      "retrieval_llm_ms": 816.68,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "death head units definition",
+      "total_ms": 721.5887999991537,
+      "retrieval_llm_ms": 721.44,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "are corn meal and corn flour the same",
+      "total_ms": 793.1803999999829,
+      "retrieval_llm_ms": 793.05,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    },
+    {
+      "query": "what is basic? uni",
+      "total_ms": 903.4834000012779,
+      "retrieval_llm_ms": 903.39,
+      "stt_ms": 0,
+      "status": "ok",
+      "provider": "gemini:gemini-3.5-flash-lite",
+      "answer": "No reliable answer found in context."
+    }
+  ]
+}
