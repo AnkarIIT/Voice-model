@@ -49,6 +49,25 @@ def run_pipeline(
     timings["search_ms"] = ret["search_ms"]
     chunks = ret["results"]
 
+    top_score = chunks[0].get("score", 0.0) if chunks else 0.0
+    if top_score < 0.45:
+        total = (time.perf_counter() - t0) * 1000
+        timings["llm_ms"] = 0
+        timings["total_ms"] = round(total, 2)
+        timings["retrieval_llm_ms"] = round(ret["total_ms"], 2)
+        return {
+            "status": "ok",
+            "query": query_text,
+            "stt": stt,
+            "retrieved": chunks,
+            "retrieval": ret,
+            "answer": "I couldn't find specific information about this in my knowledge base. Try rephrasing or asking about topics like company policy, procedures, or services covered in the docs.",
+            "guardrail": {"action": "allow", "reason": "low_relevance"},
+            "hallucination": {"grounded": True, "hit_rate": 0.0, "method": "relevance_gate"},
+            "timings": timings,
+            "provider": "none",
+        }
+
     g = check_guardrails(query_text, chunks, has_history=bool(conversation_history))
     if g["action"] != "allow":
         total = (time.perf_counter() - t0) * 1000

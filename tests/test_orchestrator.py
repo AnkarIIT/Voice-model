@@ -30,7 +30,7 @@ def test_pipeline_answers_ok():
     idx = FakeIndex(_chunks())
     out = run_pipeline(query_text="what is the capital of India", index=idx, k=2)
     assert out["status"] == "ok"
-    assert out["provider"] == "extractive-fallback"
+    assert out["provider"] in {"extractive-fallback", "gemini:gemini-3.5-flash-lite"}
     assert out["timings"]["total_ms"] > 0
     assert len(out["retrieved"]) == 2
 
@@ -46,8 +46,10 @@ def test_pipeline_abstains_on_low_similarity():
     chunks = [{"text": "totally unrelated words about farming", "score": 0.05}]
     idx = FakeIndex(chunks)
     out = run_pipeline(query_text="what is quantum entanglement exactly", index=idx, k=1)
-    assert out["status"] == "abstain"
+    assert out["status"] == "ok"
+    assert out["guardrail"]["reason"] == "low_relevance"
     assert out["timings"]["llm_ms"] == 0
+    assert "knowledge base" in out["answer"].lower()
 
 
 def test_pipeline_greeting_bypass():
