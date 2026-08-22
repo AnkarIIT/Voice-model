@@ -2,7 +2,7 @@ services:
   - type: web
     name: ragoinga
     runtime: docker
-    plan: starter
+    plan: free
     branch: main
     rootDir: .
     dockerfilePath: ./Dockerfile
