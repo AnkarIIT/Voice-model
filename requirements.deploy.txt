@@ -6,14 +6,15 @@ python-dotenv>=1.0.0
 requests>=2.31.0
 numpy>=1.26.0
 
-torch>=2.2.0
-sentence-transformers>=3.0.0
-faiss-cpu>=1.7.4
-transformers>=4.44.0
+# Pinned for 512MB deploy targets
+sentence-transformers==2.7.0
+faiss-cpu==1.7.4
+torch==2.2.0
+faster-whisper==1.0.0
 
+# Cloud LLM clients
+google-genai>=1.0.0
+
+# STT/TTS
 sarvamai>=0.1.30
 gTTS>=2.5.0
-faster-whisper>=1.0.0
-
-google-genai>=1.0.0
-openai>=1.40.0

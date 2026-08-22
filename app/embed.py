@@ -1,3 +1,4 @@
+import gc
 import json
 import logging
 import time
@@ -8,6 +9,16 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
+
+
+def _optimize_cpu_runtime() -> None:
+    try:
+        import torch
+
+        torch.set_num_threads(1)
+        torch.set_grad_enabled(False)
+    except Exception as exc:  # pragma: no cover - torch missing
+        logger.debug("torch runtime optimization skipped: %s", exc)
 
 
 def resolve_device(requested: str = "cuda") -> str:
@@ -38,11 +49,14 @@ class FaissIndex:
     def __init__(self, model_name: str, device: str = "cuda"):
         self.model_name = model_name
         self.device = resolve_device(device)
+        _optimize_cpu_runtime()
+        logger.info("loading embedding model %s on %s", model_name, self.device)
         self.model = SentenceTransformer(model_name, device=self.device)
         self.dim = self.model.get_sentence_embedding_dimension()
         self.index = faiss.IndexFlatIP(self.dim)
         self.index, self.gpu = _to_gpu(self.index)
         self.meta = []
+        gc.collect()
 
     @property
     def texts(self):
