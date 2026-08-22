@@ -1,4 +1,7 @@
---extra-index-url https://download.pytorch.org/whl/cu121
+# NOTE: do NOT add --extra-index-url https://download.pytorc... here.
+# uv (Vercel) uses first-index strategy: it resolves requests/torch only
+# from the pytorch index and fails the whole lock. CUDA wheels are only
+# needed locally; install them ad-hoc if ever required.
 
 huggingface_hub>=0.26.0
 polars>=1.0.0
