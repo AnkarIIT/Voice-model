@@ -1,3 +1,13 @@
+---
+title: RAGinGOA
+emoji: 🎙️
+colorFrom: green
+colorTo: yellow
+sdk: docker
+app_port: 8000
+pinned: false
+---
+
 # RAGinGOA — Voice-First RAG for Indic Languages
 
 **Hackathon:** HH Goa 2026  

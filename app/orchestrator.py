@@ -128,10 +128,31 @@ def run_pipeline(
 
     ans, llm_ms, prov = generate_answer(query_text, chunks, conversation_history=conversation_history)
     timings["llm_ms"] = round(llm_ms, 2)
+
+    # If the LLM itself says it has no reliable answer, convert that into a
+    # friendly user-facing message instead of surfacing the raw refusal.
+    _converted_refusal = False
+    _REFUSAL_PHRASES = {
+        "no reliable answer found in context.",
+        "no reliable answer found in retrieved context.",
+    }
+    if isinstance(ans, str) and ans.strip().lower() in _REFUSAL_PHRASES:
+        _converted_refusal = True
+        q = (query_text or "").strip()
+        if any("\u0900" <= ch <= "\u097F" for ch in q):
+            ans = "मुझे इस सवाल का जवाब knowledge base में नहीं मिला। कृपया दूसरे शब्दों में पूछें।"
+        elif any("\u0980" <= ch <= "\u09FF" for ch in q):
+            ans = "আমি knowledge base-এ এই প্রশ্নের উত্তর পাইনি। অন্য শব্দে পুনরায় জিজ্ঞাসা করুন।"
+        else:
+            ans = "I couldn't find specific information about this in my knowledge base. Try rephrasing or asking about topics like company policy, procedures, or services covered in the docs."
+
     h = hallucination_check(ans, chunks, encoder=getattr(index, "model", None))
     from .guardrails import answer_draws_on_history
 
-    if h["grounded"] or answer_draws_on_history(ans, conversation_history):
+    if _converted_refusal:
+        guardrail = {"action": "allow", "reason": "no_answer", "answer": None}
+        h = {**h, "grounded": True, "method": "refusal_converted"}
+    elif h["grounded"] or answer_draws_on_history(ans, conversation_history):
         guardrail = g
         if not h.get("grounded"):
             h = {**h, "grounded": True, "method": "history_follow_up"}
